@@ -2,7 +2,6 @@ const util = require('util')
 
 // private property names
 const pEmitterCb  = Symbol('emitterCb')
-const pStartCb    = Symbol('startCb')
 const pNextCb     = Symbol('nextCb')
 const pErrorCb    = Symbol('errorCb')
 const pCompleteCb = Symbol('completeCb')
@@ -31,8 +30,6 @@ Symbol.observable = Symbol.for("observable")
 class Subscription {
   constructor(emitterCb, startCb, nextCb, errorCb, completeCb) {
     this.constructor  = Object // wtf even is this?
-    this[pEmitterCb]  = emitterCb
-    this[pStartCb]    = startCb
     this[pNextCb]     = nextCb
     this[pErrorCb]    = errorCb
     this[pCompleteCb] = completeCb
@@ -45,7 +42,7 @@ class Subscription {
 
     let cb
     if(!this.closed)
-      try { cb = this[pEmitterCb](this) }
+      try { cb = emitterCb(this) }
       catch(e) { errorCb(e, throwFn) }
 
     cb = null      === cb && noopFn ||
