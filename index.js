@@ -38,12 +38,7 @@ class Subscription {
         complete: arguments[3],
       }
 
-    let needsCleanup = false
-    let cleanup = () => {
-      // log('cleanup')
-      needsCleanup = true
-      isClosed = true
-    }
+    let cleanup = () => isClosed = true
 
     const prototype = new Object()
     const THIS2 = Object.create(prototype)
@@ -52,7 +47,7 @@ class Subscription {
       writable:     true,
       configurable: true,
       value:        (val) => {
-        if(!THIS2.closed && !needsCleanup) {
+        if(!THIS2.closed) {
           const next = observer.next
           if(next)
             try { return next(val) }
@@ -132,7 +127,7 @@ class Subscription {
 
     cleanup = (tmp || cleanup)
 
-    if(needsCleanup)
+    if(isClosed)
       cleanup()
 
     return THIS2
