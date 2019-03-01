@@ -45,68 +45,69 @@ class Subscription {
       isClosed = true
     }
 
-    let tmp
-    try {
-      const prototype = new Object()
-      const THIS2 = Object.create(prototype)
-      this.THIS2 = THIS2
-      Object.defineProperty(prototype, 'next', {
-        enumerable:   false,
-        writable:     true,
-        configurable: true,
-        value:        (val) => {
-          if(!THIS2.closed && !needsCleanup) {
-            const next = observer.next
-            if(next)
-              try { return next(val) }
-              catch(nextError) {
-                try { cleanup() }
-                catch(cleanupError) { }
-                throw nextError
-              }
-          }
-        },
-      })
-      Object.defineProperty(prototype, 'error', {
-        writable:     true,
-        configurable: true,
-        value:        (err) => {
-          const closed = THIS2.closed
-          try { cleanup() } catch(e) { }
-          if(closed) throw err
-          const errorFn = observer.error
-          if(errorFn)
-            return errorFn(err)
-          throw err
-        },
-      })
-      Object.defineProperty(prototype, 'complete', {
-        writable:     true,
-        configurable: true,
-        value:        (val) => {
-          if(THIS2.closed)
-            try { return val } catch(e) { }
-          isClosed = true
-          try { cleanup() } catch(e) { }
-          const completeFn = observer.complete
-          if(completeFn)
-            return completeFn(val)
+    const prototype = new Object()
+    const THIS2 = Object.create(prototype)
+    this.THIS2 = THIS2
+    Object.defineProperty(prototype, 'next', {
+      enumerable:   false,
+      writable:     true,
+      configurable: true,
+      value:        (val) => {
+        if(!THIS2.closed && !needsCleanup) {
+          const next = observer.next
+          if(next)
+            try { return next(val) }
+            catch(nextError) {
+              try { cleanup() }
+              catch(cleanupError) { }
+              throw nextError
+            }
         }
-      })
-      Object.defineProperty(prototype, 'closed', {
-        configurable: true,
-        get: () => isClosed
-      })
-      Object.defineProperty(prototype, 'unsubscribe', {
-        writable:     true,
-        configurable: true,
-        value:        () => {
-          if(isClosed) return
-          isClosed = true
-          cleanup()
-        }
-      })
+      },
+    })
+    Object.defineProperty(prototype, 'error', {
+      writable:     true,
+      configurable: true,
+      value:        (err) => {
+        const closed = THIS2.closed
+        try { cleanup() } catch(e) { }
+        if(closed) throw err
+        const errorFn = observer.error
+        if(errorFn)
+          return errorFn(err)
+        throw err
+      },
+    })
+    Object.defineProperty(prototype, 'complete', {
+      writable:     true,
+      configurable: true,
+      value:        (val) => {
+        if(THIS2.closed)
+          try { return val } catch(e) { }
+        isClosed = true
+        try { cleanup() } catch(e) { }
+        const completeFn = observer.complete
+        if(completeFn)
+          return completeFn(val)
+      }
+    })
+    Object.defineProperty(prototype, 'closed', {
+      configurable: true,
+      get: () => isClosed
+    })
+    Object.defineProperty(prototype, 'unsubscribe', {
+      writable:     true,
+      configurable: true,
+      value:        () => {
+        if(isClosed) return
+        isClosed = true
+        cleanup()
+      }
+    })
 
+    let tmp
+
+    try {
       if(observer.start)
         observer.start(THIS2)
 
