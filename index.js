@@ -84,10 +84,8 @@ class Subscription {
         configurable: true,
         value:        (err) => {
           const closed = this.closed
-          this[pCleanupFn]()
-          if(closed) {
-            throw err
-          }
+          try { this[pCleanupFn]() } catch(e) { }
+          if(closed) throw err
           const errorFn = observer.error
           if(errorFn)
             return errorFn(err)
