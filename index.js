@@ -55,12 +55,6 @@ class Subscription {
 
     let tmp
     try {
-      if(observer.start)
-        observer.start(this)
-
-      if(this.closed)
-        return
-
       const prototype = new Object()
       Object.defineProperty(prototype, 'next', {
         enumerable:   false,
@@ -107,9 +101,28 @@ class Subscription {
       })
       Object.defineProperty(prototype, 'closed', {
         configurable: true,
-        get: () => this.closed
+        get: () => this[pClosed]
       })
-      tmp = emitter(Object.create(prototype))
+      Object.defineProperty(prototype, 'unsubscribe', {
+        writable:     true,
+        configurable: true,
+        value:        () => {
+          if(this[pClosed]) return
+          this[pClosed] = true
+          this[pCleanupFn]()
+        }
+      })
+
+      const THIS2 = Object.create(prototype)
+      this.THIS2 = THIS2
+
+      if(observer.start)
+        observer.start(THIS2)
+
+      if(this.closed)
+        return
+
+      tmp = emitter(THIS2)
     } catch(e) {
       if('error' in observer)
         observer.error(e)
@@ -151,13 +164,8 @@ class MyObservable {
   }
 
   subscribe(observer) {
-    return new Subscription(this[pEmitter], ...arguments)
-
-//     observer.start    = (observer.start    || noopFn)
-//     observer.next     = (observer.next     || noopFn)
-//     observer.error    = (observer.error    || throwFn)
-//     observer.complete = (observer.complete || noopFn)
-
+    const sub = new Subscription(this[pEmitter], ...arguments)
+    return sub.THIS2
   }
 
   [Symbol.observable]() {
