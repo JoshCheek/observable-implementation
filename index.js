@@ -15,6 +15,16 @@ function inspect(val) {
   return util.inspect(val, { colors: true })
 }
 
+function log(...args) {
+  args.forEach(arg => {
+    if('string' === typeof arg)
+      arg = `\x1b[35m${arg}\x1b[0m`
+    else
+      arg = inspect(arg)
+    console.log(arg)
+  })
+}
+
 Symbol.observable = Symbol.for("observable")
 
 class Subscription {
@@ -138,30 +148,49 @@ class MyObservable {
 
     if(Symbol.observable in arg) {
       const observable = arg[Symbol.observable]
-      if('function' === typeof observable) {
-        const returned = observable()
-        if(('function' !== typeof returned && 'object' !== typeof returned) || returned === null)
-          throw new TypeError(`Symbol.observable must return an object for some reason`)
-        if('function' === typeof returned) {
-          if(this === returned.constructor) {
-            console.log("IS CONSTRUCTOR", returned)
-            return returned
-          } else {
-            console.log("IS NOT CONSTRUCTOR")
-            const returned2 = new returned()
-            return returned2
-          }
-          return observable
+      if('function' !== typeof observable)
+        throw new TypeError(`Symbol.observable must be a function`)
+
+      const returned = observable()
+      if(('function' !== typeof returned && 'object' !== typeof returned) || returned === null)
+        throw new TypeError(`Symbol.observable must return an object for some reason`)
+      if('function' === typeof returned) {
+        if(this === returned.constructor) {
+          // log("IS CONSTRUCTOR", returned)
+          return returned
+        } else {
+          // log("IS NOT CONSTRUCTOR")
+          const returned2 = new returned()
+          return returned2
+        }
+        // log('HOW DID YOU GET HERE?')
+        return observable
+      } else if ('object' === typeof returned && returned !== null) {
+        if('subscribe' in returned) {
+          // log('arg[Symbol.observable] IS', observable.toString())
+          // log('arg[Symbol.observable]() IS', returned)
+          // log('IT HAS A SUBSCRIBE METHOD', returned.subscribe.toString())
+          // const returned2 = returned.subscribe()
+          // log('RETURNED2: ', returned2)
+          // log('THIS: ', this.toString())
+          // log('ARG: ', arg)
+          return new this(function() {
+            log('THE FUNCTION IS CALLED')
+          })
+          // return returned2
+        } else {
+          // log('arg[Symbol.observable]() IS', returned)
+          // log('IT HAS NO SUBSCRIBE METHOD')
+          return returned
         }
       } else {
-        throw new TypeError(`Symbol.observable must be a function`)
+        log('FKN IDK')
       }
     }
 
     let klass = this
     if('function' !== typeof klass)
       klass = MyObservable
-
 
     return new klass(() => {
     })
