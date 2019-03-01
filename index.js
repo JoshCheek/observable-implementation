@@ -134,6 +134,8 @@ class Subscription {
 
     if(needsCleanup)
       cleanup()
+
+    return this.THIS2
   }
 }
 
@@ -145,8 +147,7 @@ class MyObservable {
   }
 
   subscribe(observer) {
-    const sub = new Subscription(this[pEmitter], ...arguments)
-    return sub.THIS2
+    return new Subscription(this[pEmitter], ...arguments)
   }
 
   [Symbol.observable]() {
