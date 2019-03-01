@@ -11,6 +11,7 @@ const pIsClosed   = Symbol('closed?')
 const noopFn  = (val) => {}
 const throwFn = (e)   => { throw e }
 const inspect = (val) => util.inspect(val, { colors: true })
+const noThrow = (cb)  => { try { cb() } catch(e) { } } // why do we hide errors from the user?!
 
 const log = (...args) =>
   args.forEach(arg =>
@@ -58,10 +59,10 @@ class Subscription {
   [pCleanupCb]() { } // noop, override this when you get the real callback
 
   unsubscribe(opts={}) {
-    if(opts.force || !this.closed) try {
+    if(opts.force || !this.closed) {
       this[pIsClosed] = true
-      this[pCleanupCb]()
-    } catch(e) { } // why do we hide errors?
+      noThrow(this[pCleanupCb])
+    }
   }
 
   next(val) {
