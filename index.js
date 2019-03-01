@@ -66,7 +66,7 @@ class Subscription {
         enumerable:   false,
         writable:     true,
         configurable: true,
-        value: (val) => {
+        value:        (val) => {
           if(!this.closed && !needsCleanup) {
             const next = observer.next
             if(next)
@@ -79,11 +79,21 @@ class Subscription {
           }
         },
       })
-      prototype.error = (err) => {
-        this[pCleanupFn]()
-        if(observer.error) observer.error(err)
-        else throw err
-      }
+      Object.defineProperty(prototype, 'error', {
+        writable:     true,
+        configurable: true,
+        value:        (err) => {
+          const closed = this.closed
+          this[pCleanupFn]()
+          if(closed) {
+            throw err
+          }
+          const errorFn = observer.error
+          if(errorFn)
+            return errorFn(err)
+          throw err
+        },
+      })
       prototype.complete = (val) => {
         this[pClosed] = true
         this[pCleanupFn]()
@@ -107,7 +117,7 @@ class Subscription {
     if('function' !== typeof tmp && tmp !== null && tmp !== undefined)
       throw new TypeError(`Invalid cleanup function: ${inspect(tmp)}`)
 
-    this[pCleanupFn] = (tmp || noopFn)
+    this[pCleanupFn] = (tmp || this[pCleanupFn])
 
     if(needsCleanup)
       this[pCleanupFn]()
@@ -115,8 +125,8 @@ class Subscription {
 
   unsubscribe() {
     if(this[pClosed]) return
-    this[pCleanupFn]()
     this[pClosed] = true
+    this[pCleanupFn]()
   }
 
   get closed() {
