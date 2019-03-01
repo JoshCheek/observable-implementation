@@ -7,6 +7,7 @@ const pNextCb     = Symbol('nextCb')
 const pErrorCb    = Symbol('errorCb')
 const pCompleteCb = Symbol('completeCb')
 const pCleanup    = Symbol('cleanup')
+const pIsClosed   = Symbol('closed?')
 
 const noopFn  = (val) => {}
 const throwFn = (err) => { throw err }
@@ -29,8 +30,6 @@ Symbol.observable = Symbol.for("observable")
 
 class Subscription {
   constructor(emitter, startCb, nextCb, errorCb, completeCb) {
-    let isClosed = false
-
     class S {
       constructor(startCb, nextCb, errorCb, completeCb) {
         this.constructor = Object // wtf even is this?
@@ -42,18 +41,19 @@ class Subscription {
         this.error        = this.error.bind(this) // tests don't fail when I leave this commented out
         this.complete     = this.complete.bind(this)
         this.unsubscribe  = this.unsubscribe.bind(this)
+        this[pIsClosed]   = false
       }
 
       get closed() {
-        return isClosed
+        return this[pIsClosed]
       }
 
       [pCleanup]() {
-        isClosed = true
+        this[pIsClosed] = true
       }
 
       next(val) {
-        if(isClosed) return
+        if(this[pIsClosed]) return
         try { return this[pNextCb](val) }
         catch(err) {
           this[pCleanup]()
@@ -62,19 +62,19 @@ class Subscription {
       }
 
       error(err) {
-        if(isClosed) throw err
+        if(this[pIsClosed]) throw err
         this[pCleanup]()
         return this[pErrorCb](err, throwFn)
       }
 
       complete(val) {
-        if(isClosed) return val
+        if(this[pIsClosed]) return val
         this[pCleanup]()
         return this[pCompleteCb](val)
       }
 
       unsubscribe() {
-        return isClosed || this[pCleanup]()
+        return this[pIsClosed] || this[pCleanup]()
       }
     }
     const prototype = S.prototype
@@ -84,7 +84,7 @@ class Subscription {
 
     try {
       startCb(subscription)
-      if(!isClosed) tmp = emitter(subscription)
+      if(!subscription[pIsClosed]) tmp = emitter(subscription)
     } catch(e) {
       errorCb(e, throwFn)
     }
@@ -99,11 +99,11 @@ class Subscription {
 
     if(tmp)
       subscription[pCleanup] = () => {
-        isClosed = true
+        subscription[pIsClosed] = true
         try { tmp() } catch(e) { }
       }
 
-    if(isClosed)
+    if(subscription[pIsClosed])
       subscription[pCleanup]()
 
     return subscription
