@@ -1,7 +1,6 @@
 const util = require('util')
 
 const pEmitter   = Symbol('emitter')
-const pCleanupFn = Symbol('cleanupFn')
 const pNext      = Symbol('next')
 const pError     = Symbol('error')
 const pComplete  = Symbol('complete')
@@ -45,7 +44,6 @@ class Subscription {
       needsCleanup = true
       isClosed = true
     }
-    this[pCleanupFn] = cleanup
 
     let tmp
     try {
@@ -62,7 +60,7 @@ class Subscription {
             if(next)
               try { return next(val) }
               catch(nextError) {
-                try { this[pCleanupFn]() }
+                try { cleanup() }
                 catch(cleanupError) { }
                 throw nextError
               }
@@ -74,7 +72,7 @@ class Subscription {
         configurable: true,
         value:        (err) => {
           const closed = THIS2.closed
-          try { this[pCleanupFn]() } catch(e) { }
+          try { cleanup() } catch(e) { }
           if(closed) throw err
           const errorFn = observer.error
           if(errorFn)
@@ -89,7 +87,7 @@ class Subscription {
           if(THIS2.closed)
             try { return val } catch(e) { }
           isClosed = true
-          try { this[pCleanupFn]() } catch(e) { }
+          try { cleanup() } catch(e) { }
           const completeFn = observer.complete
           if(completeFn)
             return completeFn(val)
@@ -105,7 +103,7 @@ class Subscription {
         value:        () => {
           if(isClosed) return
           isClosed = true
-          this[pCleanupFn]()
+          cleanup()
         }
       })
 
@@ -132,10 +130,10 @@ class Subscription {
     if('function' !== typeof tmp && tmp !== null && tmp !== undefined)
       throw new TypeError(`Invalid cleanup function: ${inspect(tmp)}`)
 
-    this[pCleanupFn] = (tmp || this[pCleanupFn])
+    cleanup = (tmp || cleanup)
 
     if(needsCleanup)
-      this[pCleanupFn]()
+      cleanup()
   }
 }
 
