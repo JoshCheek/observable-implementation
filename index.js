@@ -9,7 +9,7 @@ const pCleanupCb  = Symbol('cleanupCb')
 const pIsClosed   = Symbol('closed?')
 
 const noopFn  = (val) => {}
-const throwFn = (err) => { throw err }
+const throwFn = (e) => { throw e }
 
 function inspect(val) {
   return util.inspect(val, { colors: true })
@@ -70,16 +70,16 @@ class Subscription {
   next(val) {
     if(this.closed) return
     try { return this[pNextCb](val) }
-    catch(err) {
+    catch(e) {
       this.unsubscribe()
-      throw err
+      throw e
     }
   }
 
-  error(err) {
-    if(this.closed) throw err
+  error(e) {
+    if(this.closed) throw e
     this.unsubscribe()
-    return this[pErrorCb](err, throwFn)
+    return this[pErrorCb](e, throwFn)
   }
 
   complete(val) {
