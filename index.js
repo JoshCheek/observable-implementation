@@ -6,7 +6,6 @@ const pNextCb     = Symbol('nextCb')
 const pErrorCb    = Symbol('errorCb')
 const pCompleteCb = Symbol('completeCb')
 const pCleanupCb  = Symbol('cleanupCb')
-const pCleanup    = Symbol('cleanup')
 const pIsClosed   = Symbol('closed?')
 
 const noopFn  = (val) => {}
@@ -52,18 +51,17 @@ class Subscription {
       cb.unsubscribe                 ||
       throwFn(new TypeError(`Invalid cleanup function: ${inspect(cb)}`))
 
-    this.closed && this[pCleanup]()
+    this.closed && this.unsubscribe(true)
   }
 
   get closed() {
     return !!this[pIsClosed]
   }
 
-  [pCleanupCb]() {
-    // noop, override this when you get the real callback
-  }
+  [pCleanupCb]() { } // noop, override this when you get the real callback
 
-  [pCleanup]() {
+  unsubscribe(force=false) {
+    if(this.closed && !force) return
     this[pIsClosed] = true
     try { this[pCleanupCb]() } catch(e) { }
   }
@@ -72,25 +70,21 @@ class Subscription {
     if(this.closed) return
     try { return this[pNextCb](val) }
     catch(err) {
-      this[pCleanup]()
+      this.unsubscribe()
       throw err
     }
   }
 
   error(err) {
     if(this.closed) throw err
-    this[pCleanup]()
+    this.unsubscribe()
     return this[pErrorCb](err, throwFn)
   }
 
   complete(val) {
     if(this.closed) return val
-    this[pCleanup]()
+    this.unsubscribe()
     return this[pCompleteCb](val)
-  }
-
-  unsubscribe() {
-    return this.closed || this[pCleanup]()
   }
 }
 
