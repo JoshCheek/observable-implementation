@@ -1,9 +1,14 @@
 const util = require('util')
 
-const pEmitter   = Symbol('emitter')
-const pNext      = Symbol('next')
-const pError     = Symbol('error')
-const pComplete  = Symbol('complete')
+// private property names
+const pEmitter    = Symbol('emitter')
+const pNext       = Symbol('next')
+const pError      = Symbol('error')
+const pComplete   = Symbol('complete')
+const pStartCb    = Symbol('startCb')
+const pNextCb     = Symbol('nextCb')
+const pErrorCb    = Symbol('errorCb')
+const pCompleteCb = Symbol('completeCb')
 
 const noopFn  = (val) => {}
 const throwFn = (err) => { throw err }
@@ -30,6 +35,13 @@ class Subscription {
     let cleanup = () => isClosed = true
 
     class S {
+      constructor(startCb, nextCb, errorCb, completeCb) {
+        this.constructor = Object // wtf even is this?
+        this[pStartCb]    = startCb
+        this[pNextCb]     = nextCb
+        this[pErrorCb]    = errorCb
+        this[pCompleteCb] = completeCb
+      }
       next(val) {
         if(isClosed) return
         try { return nextCb(val) }
@@ -56,8 +68,7 @@ class Subscription {
       }
     }
     const prototype = S.prototype
-    prototype.constructor = Object
-    const subscription = new S()
+    const subscription = new S(startCb, nextCb, errorCb, completeCb)
 
     let tmp
 
