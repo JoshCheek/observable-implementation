@@ -140,12 +140,6 @@ class Subscription {
     if(needsCleanup)
       this[pCleanupFn]()
   }
-
-  unsubscribe() {
-    if(this[pClosed]) return
-    this[pClosed] = true
-    this[pCleanupFn]()
-  }
 }
 
 class MyObservable {
