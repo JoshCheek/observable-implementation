@@ -142,22 +142,22 @@ class MyObservable {
     })
   }
 
-  static from(arg) {
-    if(Symbol.observable in arg) {
-      const observable = arg[Symbol.observable]()
+  static from(toConvert) {
+    if(Symbol.observable in toConvert) {
+      const observable = toConvert[Symbol.observable]()
       if('subscribe' in observable)
-        return new this(arg => observable.subscribe(arg))
+        return new this(observable.subscribe)
       return observable
     }
 
-    let klass = this
-    if('function' !== typeof klass)
-      klass = MyObservable
+    let Observable = this
+    if('function' !== typeof Observable)
+      Observable = MyObservable
 
-    return new klass((sink) => {
-      for(let element of arg)
-        sink.next(element)
-      sink.complete()
+    return new Observable(({ next, complete }) => {
+      for(let element of toConvert)
+        next(element)
+      complete()
     })
   }
 }
