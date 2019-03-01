@@ -156,17 +156,17 @@ class MyObservable {
         throw new TypeError(`Symbol.observable must return an object for some reason`)
       if('function' === typeof returned) {
         if(this === returned.constructor) {
-          // log("IS CONSTRUCTOR", returned)
+          log("IS CONSTRUCTOR", returned)
           return returned
         } else {
-          // log("IS NOT CONSTRUCTOR")
+          log("IS NOT CONSTRUCTOR")
           const returned2 = new returned()
           return returned2
         }
-        // log('HOW DID YOU GET HERE?')
         return observable
       } else if ('object' === typeof returned && returned !== null) {
         if('subscribe' in returned) {
+          log('HAS SUBSCRIBE')
           // log('arg[Symbol.observable] IS', observable.toString())
           // log('arg[Symbol.observable]() IS', returned)
           // const returned2 = returned.subscribe()
@@ -178,6 +178,7 @@ class MyObservable {
           })
           // return returned2
         } else {
+          log('NO SUBSCRIBE')
           // log('arg[Symbol.observable]() IS', returned)
           // log('IT HAS NO SUBSCRIBE METHOD')
           return returned
@@ -186,12 +187,16 @@ class MyObservable {
         log('FKN IDK')
       }
     }
+    log('PAST `if` HELL')
 
     let klass = this
     if('function' !== typeof klass)
       klass = MyObservable
 
-    return new klass(() => {
+    return new klass((sink) => {
+      for(let element of arg)
+        sink.next(element)
+      sink.complete()
     })
   }
 }
