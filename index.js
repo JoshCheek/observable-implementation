@@ -29,56 +29,50 @@ function log(...args) {
 Symbol.observable = Symbol.for("observable")
 
 class Subscription {
-  constructor(emitter, startCb, nextCb, errorCb, completeCb) {
-    class S {
-      constructor(startCb, nextCb, errorCb, completeCb) {
-        this.constructor = Object // wtf even is this?
-        this[pStartCb]    = startCb
-        this[pNextCb]     = nextCb
-        this[pErrorCb]    = errorCb
-        this[pCompleteCb] = completeCb
-        this.next         = this.next.bind(this)
-        // this.error        = this.error.bind(this) // tests don't fail when I leave this commented out
-        this.complete     = this.complete.bind(this)
-        this.unsubscribe  = this.unsubscribe.bind(this)
-        this[pIsClosed]   = false
-      }
+  constructor(startCb, nextCb, errorCb, completeCb) {
+    this.constructor = Object // wtf even is this?
+    this[pStartCb]    = startCb
+    this[pNextCb]     = nextCb
+    this[pErrorCb]    = errorCb
+    this[pCompleteCb] = completeCb
+    this.next         = this.next.bind(this)
+    // this.error        = this.error.bind(this) // tests don't fail when I leave this commented out
+    this.complete     = this.complete.bind(this)
+    this.unsubscribe  = this.unsubscribe.bind(this)
+    this[pIsClosed]   = false
+  }
 
-      get closed() {
-        return this[pIsClosed]
-      }
+  get closed() {
+    return this[pIsClosed]
+  }
 
-      [pCleanup]() {
-        this[pIsClosed] = true
-      }
+  [pCleanup]() {
+    this[pIsClosed] = true
+  }
 
-      next(val) {
-        if(this.closed) return
-        try { return this[pNextCb](val) }
-        catch(err) {
-          this[pCleanup]()
-          throw err
-        }
-      }
-
-      error(err) {
-        if(this.closed) throw err
-        this[pCleanup]()
-        return this[pErrorCb](err, throwFn)
-      }
-
-      complete(val) {
-        if(this.closed) return val
-        this[pCleanup]()
-        return this[pCompleteCb](val)
-      }
-
-      unsubscribe() {
-        return this.closed || this[pCleanup]()
-      }
+  next(val) {
+    if(this.closed) return
+    try { return this[pNextCb](val) }
+    catch(err) {
+      this[pCleanup]()
+      throw err
     }
+  }
 
-    return S
+  error(err) {
+    if(this.closed) throw err
+    this[pCleanup]()
+    return this[pErrorCb](err, throwFn)
+  }
+
+  complete(val) {
+    if(this.closed) return val
+    this[pCleanup]()
+    return this[pCompleteCb](val)
+  }
+
+  unsubscribe() {
+    return this.closed || this[pCleanup]()
   }
 }
 
@@ -124,8 +118,7 @@ class MyObservable {
       throw new TypeError("Observer arg must be an object or the onNext function")
     }
 
-    const S = new Subscription(this[pEmitter], startCb, nextCb, errorCb, completeCb)
-    const subscription = new S(startCb, nextCb, errorCb, completeCb)
+    const subscription = new Subscription(startCb, nextCb, errorCb, completeCb)
 
     startCb(subscription)
 
