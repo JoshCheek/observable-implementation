@@ -28,7 +28,6 @@ Symbol.observable = Symbol.for("observable")
 
 class Subscription {
   constructor(emitter, observer) {
-    this.constructor = Object // fkn whatever...
     this[pClosed] = false
 
     if(!observer || !('object' === typeof observer || 'function' === typeof observer) )
