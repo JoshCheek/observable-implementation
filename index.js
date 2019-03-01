@@ -74,12 +74,11 @@ class Subscription {
       writable:     true,
       configurable: true,
       value:        (val) => {
-        if(!THIS2.closed) {
-          try { return nextCb(val) }
-          catch(nextError) {
-            cleanup()
-            throw nextError
-          }
+        if(isClosed) return
+        try { return nextCb(val) }
+        catch(err) {
+          cleanup()
+          throw err
         }
       },
     })
@@ -87,9 +86,8 @@ class Subscription {
       writable:     true,
       configurable: true,
       value:        (err) => {
-        const wasClosed = isClosed
+        if(isClosed) throw err
         cleanup()
-        if(wasClosed) throw err
         return errorCb(err, throwFn)
       },
     })
