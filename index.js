@@ -9,11 +9,8 @@ const pCleanupCb  = Symbol('cleanupCb')
 const pIsClosed   = Symbol('closed?')
 
 const noopFn  = (val) => {}
-const throwFn = (e) => { throw e }
-
-function inspect(val) {
-  return util.inspect(val, { colors: true })
-}
+const throwFn = (e)   => { throw e }
+const inspect = (val) => util.inspect(val, { colors: true })
 
 const log = (...args) =>
   args.forEach(arg =>
