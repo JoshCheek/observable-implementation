@@ -46,14 +46,8 @@ const delegate = (obj, fnName, desc = fnName) => {
 class Subscription {
   constructor(emitter, observer) {
     let isClosed = false
-
     let nextCb, errorCb, completeCb
     if('function' === typeof observer) {
-      observer = {
-        next:     arguments[1],
-        error:    arguments[2],
-        complete: arguments[3],
-      }
       nextCb     = delegate(arguments, 1, 'next')
       errorCb    = delegate(arguments, 2, 'error')
       completeCb = delegate(arguments, 3, 'complete')
@@ -115,7 +109,7 @@ class Subscription {
       if(observer.start)
         observer.start(THIS2)
 
-      if(THIS2.closed)
+      if(isClosed)
         return
 
       tmp = emitter(THIS2)
