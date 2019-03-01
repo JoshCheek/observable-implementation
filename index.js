@@ -38,7 +38,7 @@ class Subscription {
         this[pErrorCb]    = errorCb
         this[pCompleteCb] = completeCb
         this.next         = this.next.bind(this)
-        this.error        = this.error.bind(this) // tests don't fail when I leave this commented out
+        // this.error        = this.error.bind(this) // tests don't fail when I leave this commented out
         this.complete     = this.complete.bind(this)
         this.unsubscribe  = this.unsubscribe.bind(this)
         this[pIsClosed]   = false
@@ -81,10 +81,9 @@ class Subscription {
     const subscription = new S(startCb, nextCb, errorCb, completeCb)
 
     let tmp
-
     try {
       startCb(subscription)
-      if(!subscription.closed) tmp = emitter(subscription)
+      subscription.closed || (tmp = emitter(subscription))
     } catch(e) {
       errorCb(e, throwFn)
     }
@@ -98,11 +97,10 @@ class Subscription {
     if('function' !== typeof tmp)
       throw new TypeError(`Invalid cleanup function: ${inspect(tmp)}`)
 
-    if(tmp)
-      subscription[pCleanup] = () => {
-        subscription[pIsClosed] = true
-        try { tmp() } catch(e) { }
-      }
+    subscription[pCleanup] = () => {
+      subscription[pIsClosed] = true
+      try { tmp() } catch(e) { }
+    }
 
     if(subscription.closed)
       subscription[pCleanup]()
