@@ -169,13 +169,12 @@ class MyObservable {
         if('subscribe' in returned) {
           // log('arg[Symbol.observable] IS', observable.toString())
           // log('arg[Symbol.observable]() IS', returned)
-          // log('IT HAS A SUBSCRIBE METHOD', returned.subscribe.toString())
           // const returned2 = returned.subscribe()
           // log('RETURNED2: ', returned2)
           // log('THIS: ', this.toString())
           // log('ARG: ', arg)
-          return new this(function() {
-            log('THE FUNCTION IS CALLED')
+          return new this(function(arg) {
+            return returned.subscribe(arg)
           })
           // return returned2
         } else {
