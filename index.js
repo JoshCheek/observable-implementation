@@ -16,15 +16,14 @@ function inspect(val) {
   return util.inspect(val, { colors: true })
 }
 
-function log(...args) {
-  args.forEach(arg => {
-    if('string' === typeof arg)
-      arg = `\x1b[35m${arg}\x1b[0m`
-    else
-      arg = inspect(arg)
-    console.log(arg)
-  })
-}
+const log = (...args) =>
+  args.forEach(arg =>
+    console.log(
+      ('string' === typeof arg)
+      ? `\x1b[35m${arg}\x1b[0m` // print strings in magenta
+      : inspect(arg)            // print non-strings as inspected/highlighted objects
+    )
+  )
 
 Symbol.observable = Symbol.for("observable")
 
