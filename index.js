@@ -69,8 +69,11 @@ class Subscription {
         value: (val) => {
           // log('CALLING NEXT')
           // log({closed: this.closed})
-          if(!this.closed && !needsCleanup && observer.next)
-            return observer.next(val)
+          if(!this.closed && !needsCleanup) {
+            const next = observer.next
+            if(next)
+              return next(val)
+          }
         },
       })
       prototype.error = (err) => {
