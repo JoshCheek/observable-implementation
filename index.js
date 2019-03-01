@@ -1,7 +1,6 @@
 const util = require('util')
 
 const pEmitter   = Symbol('emitter')
-const pClosed    = Symbol('closed')
 const pCleanupFn = Symbol('cleanupFn')
 const pNext      = Symbol('next')
 const pError     = Symbol('error')
@@ -28,7 +27,7 @@ Symbol.observable = Symbol.for("observable")
 
 class Subscription {
   constructor(emitter, observer) {
-    this[pClosed] = false
+    let isClosed = false
 
     if(!observer || !('object' === typeof observer || 'function' === typeof observer) )
       throw new TypeError("Observer arg must be an object or the onNext function")
@@ -46,7 +45,7 @@ class Subscription {
     let cleanup = () => {
       // log('cleanup')
       needsCleanup = true
-      this[pClosed] = true
+      isClosed = true
     }
     this[pCleanupFn] = cleanup
 
@@ -91,7 +90,7 @@ class Subscription {
         value:        (val) => {
           if(THIS2.closed)
             try { return val } catch(e) { }
-          this[pClosed] = true
+          isClosed = true
           try { this[pCleanupFn]() } catch(e) { }
           const completeFn = observer.complete
           if(completeFn)
@@ -100,14 +99,14 @@ class Subscription {
       })
       Object.defineProperty(prototype, 'closed', {
         configurable: true,
-        get: () => this[pClosed]
+        get: () => isClosed
       })
       Object.defineProperty(prototype, 'unsubscribe', {
         writable:     true,
         configurable: true,
         value:        () => {
-          if(this[pClosed]) return
-          this[pClosed] = true
+          if(isClosed) return
+          isClosed = true
           this[pCleanupFn]()
         }
       })
