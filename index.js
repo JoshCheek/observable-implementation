@@ -92,12 +92,19 @@ class Subscription {
           throw err
         },
       })
-      prototype.complete = (val) => {
-        this[pClosed] = true
-        this[pCleanupFn]()
-        if('complete' in observer)
-          observer.complete(val)
-      }
+      Object.defineProperty(prototype, 'complete', {
+        writable:     true,
+        configurable: true,
+        value:        (val) => {
+          if(this.closed)
+            try { return val } catch(e) { }
+          this[pClosed] = true
+          try { this[pCleanupFn]() } catch(e) { }
+          const completeFn = observer.complete
+          if(completeFn)
+            return completeFn(val)
+        }
+      })
       tmp = emitter(Object.create(prototype))
     } catch(e) {
       if('error' in observer)
