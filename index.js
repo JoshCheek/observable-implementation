@@ -109,10 +109,7 @@ class Subscription {
     Object.defineProperty(prototype, 'unsubscribe', {
       writable:     true,
       configurable: true,
-      value:        () => {
-        if(isClosed) return
-        cleanup()
-      }
+      value:        () => isClosed || cleanup()
     })
 
     let tmp
