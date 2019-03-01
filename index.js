@@ -59,8 +59,9 @@ class Subscription {
         enumerable:   false,
         writable:     true,
         configurable: true,
-        value: function(val) {
-          if(observer.next) observer.next(val)
+        value: (val) => {
+          if(!this.closed && !needsCleanup && observer.next)
+            return observer.next(val)
         },
       })
       prototype.error = function(err) {
