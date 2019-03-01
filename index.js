@@ -41,13 +41,11 @@ class Subscription {
     this.unsubscribe  = this.unsubscribe.bind(this)
     this[pIsClosed]   = false
 
-    const subscription = this
-
-    startCb(subscription)
+    startCb(this)
 
     let cleanupCb
-    if(!subscription.closed)
-      try { cleanupCb = this[pEmitterCb](subscription) }
+    if(!this.closed)
+      try { cleanupCb = this[pEmitterCb](this) }
       catch(e) { errorCb(e, throwFn) }
 
     if('object' === typeof cleanupCb && cleanupCb !== null && 'function' === typeof cleanupCb.unsubscribe)
@@ -59,15 +57,13 @@ class Subscription {
     if('function' !== typeof cleanupCb)
       throw new TypeError(`Invalid cleanup function: ${inspect(cleanupCb)}`)
 
-    subscription[pCleanup] = () => {
-      subscription[pIsClosed] = true
+    this[pCleanup] = () => {
+      this[pIsClosed] = true
       try { cleanupCb() } catch(e) { }
     }
 
-    if(subscription.closed)
-      subscription[pCleanup]()
-
-    return subscription
+    if(this.closed)
+      this[pCleanup]()
   }
 
   get closed() {
