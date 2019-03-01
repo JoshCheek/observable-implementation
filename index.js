@@ -25,12 +25,13 @@ function log(...args) {
 Symbol.observable = Symbol.for("observable")
 
 const delegate = (obj, fnName, desc = fnName) => {
-  let fn
-  return (...args) => {
+  let fn, dneImpl
+  return (arg, ifDneRunThis) => {
+    dneImpl = (ifDneRunThis || noopFn)
     if(!fn) {
       let candidateFn = obj[fnName]
       if(candidateFn === null || candidateFn == undefined)
-        candidateFn = noopFn
+        candidateFn = (arg) => dneImpl(arg)
       if('function' === typeof candidateFn)
         fn = candidateFn
       else
@@ -38,7 +39,7 @@ const delegate = (obj, fnName, desc = fnName) => {
           throw new TypeError(`${inspect(obj)}.${fnName} should be the ${desc} function, instead its ${inspect(candidateFn)}`)
         }
     }
-    return fn(...args)
+    return fn(arg)
   }
 }
 
@@ -89,10 +90,7 @@ class Subscription {
         const closed = THIS2.closed
         cleanup()
         if(closed) throw err
-        const errorFn = observer.error
-        if(errorFn)
-          return errorFn(err)
-        throw err
+        return errorCb(err, throwFn)
       },
     })
     Object.defineProperty(prototype, 'complete', {
