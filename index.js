@@ -76,9 +76,8 @@ class Subscription {
       writable:     true,
       configurable: true,
       value:        (val) => {
-        if(THIS2.closed)
+        if(isClosed)
           try { return val } catch(e) { }
-        isClosed = true
         try { cleanup() } catch(e) { }
         const completeFn = observer.complete
         if(completeFn)
@@ -94,7 +93,6 @@ class Subscription {
       configurable: true,
       value:        () => {
         if(isClosed) return
-        isClosed = true
         cleanup()
       }
     })
@@ -125,7 +123,11 @@ class Subscription {
     if('function' !== typeof tmp && tmp !== null && tmp !== undefined)
       throw new TypeError(`Invalid cleanup function: ${inspect(tmp)}`)
 
-    cleanup = (tmp || cleanup)
+    if(tmp)
+      cleanup = () => {
+        isClosed = true
+        tmp()
+      }
 
     if(isClosed)
       cleanup()
