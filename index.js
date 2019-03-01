@@ -54,20 +54,25 @@ class Subscription {
       if(this.closed)
         return
 
-      tmp = emitter({
-        next: function(val) {
+      const prototype = Object.create(Object)
+      Object.defineProperty(prototype, 'next', {
+        enumerable:   false,
+        writable:     true,
+        configurable: true,
+        value: function(val) {
           if(observer.next) observer.next(val)
         },
-        error: function(err) {
-          cleanup()
-          if(observer.error) observer.error(err)
-          else throw err
-        },
-        complete: function(val) {
-          cleanup()
-          if(observer.complete) observer.complete(val)
-        }
       })
+      prototype.error = function(err) {
+        cleanup()
+        if(observer.error) observer.error(err)
+        else throw err
+      }
+      prototype.complete = function(val) {
+        cleanup()
+        if(observer.complete) observer.complete(val)
+      }
+      tmp = emitter(Object.create(prototype))
     } catch(e) {
       ;(observer.error || throwFn)(e)
       return
@@ -160,6 +165,7 @@ class MyObservable {
       complete()
     })
   }
+
 }
 
 require("es-observable-tests").runTests(MyObservable);
