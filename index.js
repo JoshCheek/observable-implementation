@@ -42,8 +42,24 @@ class Subscription {
     //     complete: completeFn
     // }
 
+    if(!observer || !('object' === typeof observer || 'function' === typeof observer) )
+      throw new TypeError("Observer arg must be an object or the onNext function")
+
+    if('function' === typeof observer) {
+      const { 1: onNext, 2: onError, 3: onComplete } = arguments
+      observer = {
+        next:     onNext,
+        error:    onError,
+        complete: onComplete,
+      }
+    }
+
     let needsCleanup = false
-    let cleanup = function() { needsCleanup = true }
+    let cleanup = () => {
+      log('cleanup')
+      needsCleanup = true
+      this[pClosed] = true
+    }
     this[pCleanupFn] = cleanup
 
     let tmp
@@ -54,28 +70,32 @@ class Subscription {
       if(this.closed)
         return
 
-      const prototype = Object.create(Object)
+      const prototype = new Object()
       Object.defineProperty(prototype, 'next', {
         enumerable:   false,
         writable:     true,
         configurable: true,
         value: (val) => {
+          log('CALLING NEXT')
           if(!this.closed && !needsCleanup && observer.next)
             return observer.next(val)
         },
       })
-      prototype.error = function(err) {
+      prototype.error = (err) => {
         cleanup()
         if(observer.error) observer.error(err)
         else throw err
       }
-      prototype.complete = function(val) {
+      prototype.complete = (val) => {
         cleanup()
         if(observer.complete) observer.complete(val)
       }
       tmp = emitter(Object.create(prototype))
     } catch(e) {
-      ;(observer.error || throwFn)(e)
+      if('error' in observer)
+        observer.error(e)
+      else
+        throw e
       return
     }
 
@@ -112,18 +132,7 @@ class MyObservable {
   }
 
   subscribe(observer) {
-    if(!observer || !('object' === typeof observer || 'function' === typeof observer) )
-      throw new TypeError("First arg must be an object or the onNext function")
-
-    if('function' === typeof observer) {
-      const { 0: onNext, 1: onError, 2: onComplete } = arguments
-      observer = {
-        next:     onNext,
-        error:    onError,
-        complete: onComplete,
-      }
-    }
-    return new Subscription(this[pEmitter], observer)
+    return new Subscription(this[pEmitter], ...arguments)
 
 //     observer.start    = (observer.start    || noopFn)
 //     observer.next     = (observer.next     || noopFn)
