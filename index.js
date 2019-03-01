@@ -61,9 +61,10 @@ class Subscription {
   [pCleanupCb]() { } // noop, override this when you get the real callback
 
   unsubscribe(force=false) {
-    if(this.closed && !force) return
-    this[pIsClosed] = true
-    try { this[pCleanupCb]() } catch(e) { }
+    if(force || !this.closed) try {
+      this[pIsClosed] = true
+      this[pCleanupCb]()
+    } catch(e) { } // why do we hide errors?
   }
 
   next(val) {
