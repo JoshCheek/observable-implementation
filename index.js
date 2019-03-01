@@ -143,16 +143,16 @@ class MyObservable {
   }
 
   static from(toConvert) {
-    if(Symbol.observable in toConvert) {
-      const observable = toConvert[Symbol.observable]()
-      if('subscribe' in observable)
-        return new this(observable.subscribe)
-      return observable
-    }
-
     let Observable = this
     if('function' !== typeof Observable)
       Observable = MyObservable
+
+    if(Symbol.observable in toConvert) {
+      const observable = toConvert[Symbol.observable]()
+      if('subscribe' in observable)
+        return new Observable(observable.subscribe)
+      return observable
+    }
 
     return new Observable(({ next, complete }) => {
       for(let element of toConvert)
