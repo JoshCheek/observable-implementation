@@ -40,7 +40,6 @@ class Subscription {
     // this.error        = this.error.bind(this) // tests don't fail when I leave this commented out
     this.complete     = this.complete.bind(this)
     this.unsubscribe  = this.unsubscribe.bind(this)
-    this[pIsClosed]   = false
 
     startCb(this)
 
@@ -48,6 +47,7 @@ class Subscription {
     if(!this.closed)
       try { cleanupCb = this[pEmitterCb](this) }
       catch(e) { errorCb(e, throwFn) }
+
 
     if('object' === typeof cleanupCb && cleanupCb !== null && 'function' === typeof cleanupCb.unsubscribe)
       cleanupCb = cleanupCb.unsubscribe
@@ -65,7 +65,7 @@ class Subscription {
   }
 
   get closed() {
-    return this[pIsClosed]
+    return !!this[pIsClosed]
   }
 
   [pCleanupCb]() {
