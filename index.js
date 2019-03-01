@@ -171,4 +171,13 @@ class MyObservable {
 
 }
 
-require("es-observable-tests").runTests(MyObservable);
+require("es-observable-tests")
+  .runTests(MyObservable)
+  .then(({logger: { passed, failed, errored }}) => {
+    let status = `\x1b[32m${passed}`
+    if(failed)  status += ` \x1b[31m${failed}`
+    if(errored) status += ` \x1b[33m${errored}`
+    console.log(status)
+    if(failed || errored)
+      process.exit(1)
+  })
