@@ -30,7 +30,7 @@ class Subscription {
     this[pErrorCb]    = errorCb
     this[pCompleteCb] = completeCb
     this.next         = this.next.bind(this)
-    // this.error        = this.error.bind(this) // tests don't fail when I leave this commented out
+    this.error        = this.error.bind(this) // tests don't fail when I leave this commented out
     this.complete     = this.complete.bind(this)
     this.unsubscribe  = this.unsubscribe.bind(this)
 
@@ -48,7 +48,7 @@ class Subscription {
       cb.unsubscribe                 ||
       throwFn(new TypeError(`Invalid cleanup function: ${inspect(cb)}`))
 
-    this.closed && this.unsubscribe(true)
+    this.closed && this.unsubscribe({ force: true })
   }
 
   get closed() {
@@ -57,8 +57,8 @@ class Subscription {
 
   [pCleanupCb]() { } // noop, override this when you get the real callback
 
-  unsubscribe(force=false) {
-    if(force || !this.closed) try {
+  unsubscribe(opts={}) {
+    if(opts.force || !this.closed) try {
       this[pIsClosed] = true
       this[pCleanupCb]()
     } catch(e) { } // why do we hide errors?
