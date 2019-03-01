@@ -47,7 +47,6 @@ class Subscription {
 
     const prototype = new Object()
     const THIS2 = Object.create(prototype)
-    this.THIS2 = THIS2
     Object.defineProperty(prototype, 'next', {
       enumerable:   false,
       writable:     true,
@@ -136,7 +135,7 @@ class Subscription {
     if(needsCleanup)
       cleanup()
 
-    return this.THIS2
+    return THIS2
   }
 }
 
