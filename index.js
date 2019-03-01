@@ -6,6 +6,7 @@ const pStartCb    = Symbol('startCb')
 const pNextCb     = Symbol('nextCb')
 const pErrorCb    = Symbol('errorCb')
 const pCompleteCb = Symbol('completeCb')
+const pCleanup    = Symbol('cleanup')
 
 const noopFn  = (val) => {}
 const throwFn = (err) => { throw err }
@@ -29,7 +30,6 @@ Symbol.observable = Symbol.for("observable")
 class Subscription {
   constructor(emitter, startCb, nextCb, errorCb, completeCb) {
     let isClosed = false
-    let cleanup = () => isClosed = true
 
     class S {
       constructor(startCb, nextCb, errorCb, completeCb) {
@@ -39,37 +39,42 @@ class Subscription {
         this[pErrorCb]    = errorCb
         this[pCompleteCb] = completeCb
         this.next         = this.next.bind(this)
-        // this.error        = this.error.bind(this) // tests don't fail when I leave this commented out
+        this.error        = this.error.bind(this) // tests don't fail when I leave this commented out
         this.complete     = this.complete.bind(this)
+        this.unsubscribe  = this.unsubscribe.bind(this)
       }
 
       get closed() {
         return isClosed
       }
 
+      [pCleanup]() {
+        isClosed = true
+      }
+
       next(val) {
         if(isClosed) return
         try { return this[pNextCb](val) }
         catch(err) {
-          cleanup()
+          this[pCleanup]()
           throw err
         }
       }
 
       error(err) {
         if(isClosed) throw err
-        cleanup()
+        this[pCleanup]()
         return this[pErrorCb](err, throwFn)
       }
 
       complete(val) {
         if(isClosed) return val
-        cleanup()
+        this[pCleanup]()
         return this[pCompleteCb](val)
       }
 
       unsubscribe() {
-        return isClosed || cleanup()
+        return isClosed || this[pCleanup]()
       }
     }
     const prototype = S.prototype
@@ -93,13 +98,13 @@ class Subscription {
       throw new TypeError(`Invalid cleanup function: ${inspect(tmp)}`)
 
     if(tmp)
-      cleanup = () => {
+      subscription[pCleanup] = () => {
         isClosed = true
         try { tmp() } catch(e) { }
       }
 
     if(isClosed)
-      cleanup()
+      subscription[pCleanup]()
 
     return subscription
   }
