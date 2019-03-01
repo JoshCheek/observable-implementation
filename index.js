@@ -67,12 +67,15 @@ class Subscription {
         writable:     true,
         configurable: true,
         value: (val) => {
-          // log('CALLING NEXT')
-          // log({closed: this.closed})
           if(!this.closed && !needsCleanup) {
             const next = observer.next
             if(next)
-              return next(val)
+              try { return next(val) }
+              catch(nextError) {
+                try { this[pCleanupFn]() }
+                catch(cleanupError) { }
+                throw nextError
+              }
           }
         },
       })
@@ -82,7 +85,6 @@ class Subscription {
         else throw err
       }
       prototype.complete = (val) => {
-        // log({ cleanupFn: this[pCleanupFn] })
         this[pClosed] = true
         this[pCleanupFn]()
         if('complete' in observer)
