@@ -1,7 +1,6 @@
 const util = require('util')
 
 // private property names
-const pEmitter    = Symbol('emitter')
 const pEmitterCb  = Symbol('emitterCb')
 const pStartCb    = Symbol('startCb')
 const pNextCb     = Symbol('nextCb')
@@ -129,7 +128,7 @@ class MyObservable {
   constructor(emitter) {
     if("function" !== typeof emitter)
       throw new TypeError("First arg must be callable")
-    this[pEmitter] = emitter
+    this[pEmitterCb] = emitter
   }
 
   subscribe(observer) {
@@ -148,7 +147,7 @@ class MyObservable {
       throw new TypeError("Observer arg must be an object or the onNext function")
     }
 
-    return new Subscription(this[pEmitter], startCb, nextCb, errorCb, completeCb)
+    return new Subscription(this[pEmitterCb], startCb, nextCb, errorCb, completeCb)
   }
 
   [Symbol.observable]() {
