@@ -86,23 +86,19 @@ class Subscription {
   }
 }
 
+function validateFn(errMsg, fn) {
+  if('function' === typeof fn) return fn
+  throw new TypeError(errMsg)
+}
+
 function delegate(obj, fnName, desc = fnName) {
-  let fn, dneImpl
-  return (arg, ifDneRunThis) => {
-    dneImpl = (ifDneRunThis || noopFn)
-    if(!fn) {
-      let candidateFn = obj[fnName]
-      if(candidateFn === null || candidateFn == undefined)
-        candidateFn = (arg) => dneImpl(arg)
-      if('function' === typeof candidateFn)
-        fn = candidateFn
-      else
-        fn = () => {
-          throw new TypeError(`${inspect(obj)}.${fnName} should be the ${desc} function, instead its ${inspect(candidateFn)}`)
-        }
-    }
-    return fn.call(obj, arg)
-  }
+  let fn
+  return (arg, ifDneRunThis) =>
+    (fn || (fn = validateFn(
+             `${inspect(obj)}.${fnName} should be the ${desc} function, instead its ${inspect(fn)}`,
+             obj[fnName] || ifDneRunThis || noopFn
+           ))
+    ).call(obj, arg)
 }
 
 class MyObservable {
