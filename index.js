@@ -38,37 +38,26 @@ class Subscription {
           throw err
         }
       }
-    }
-    const prototype = S.prototype
-    prototype.constructor = Object
-    const THIS2 = new S()
-    Object.defineProperty(prototype, 'error', {
-      writable:     true,
-      configurable: true,
-      value:        (err) => {
+      error(err) {
         if(isClosed) throw err
         cleanup()
         return errorCb(err, throwFn)
-      },
-    })
-    Object.defineProperty(prototype, 'complete', {
-      writable:     true,
-      configurable: true,
-      value:        (val) => {
+      }
+      complete(val) {
         if(isClosed) return val
         cleanup()
         return completeCb(val)
       }
-    })
-    Object.defineProperty(prototype, 'closed', {
-      configurable: true,
-      get: () => isClosed
-    })
-    Object.defineProperty(prototype, 'unsubscribe', {
-      writable:     true,
-      configurable: true,
-      value:        () => isClosed || cleanup()
-    })
+      get closed() {
+        return isClosed
+      }
+      unsubscribe() {
+        return isClosed || cleanup()
+      }
+    }
+    const prototype = S.prototype
+    prototype.constructor = Object
+    const THIS2 = new S()
 
     let tmp
 
