@@ -78,33 +78,7 @@ class Subscription {
       }
     }
 
-    const subscription = new S(startCb, nextCb, errorCb, completeCb)
-
-    startCb(subscription)
-
-    let cleanupCb
-    if(!subscription.closed)
-      try { cleanupCb = emitter(subscription) }
-      catch(e) { errorCb(e, throwFn) }
-
-    if('object' === typeof cleanupCb && cleanupCb !== null && 'function' === typeof cleanupCb.unsubscribe)
-      cleanupCb = cleanupCb.unsubscribe
-
-    if(cleanupCb === null || cleanupCb === undefined)
-      cleanupCb = noopFn
-
-    if('function' !== typeof cleanupCb)
-      throw new TypeError(`Invalid cleanup function: ${inspect(cleanupCb)}`)
-
-    subscription[pCleanup] = () => {
-      subscription[pIsClosed] = true
-      try { cleanupCb() } catch(e) { }
-    }
-
-    if(subscription.closed)
-      subscription[pCleanup]()
-
-    return subscription
+    return S
   }
 }
 
@@ -150,7 +124,34 @@ class MyObservable {
       throw new TypeError("Observer arg must be an object or the onNext function")
     }
 
-    return new Subscription(this[pEmitter], startCb, nextCb, errorCb, completeCb)
+    const S = new Subscription(this[pEmitter], startCb, nextCb, errorCb, completeCb)
+    const subscription = new S(startCb, nextCb, errorCb, completeCb)
+
+    startCb(subscription)
+
+    let cleanupCb
+    if(!subscription.closed)
+      try { cleanupCb = this[pEmitter](subscription) }
+      catch(e) { errorCb(e, throwFn) }
+
+    if('object' === typeof cleanupCb && cleanupCb !== null && 'function' === typeof cleanupCb.unsubscribe)
+      cleanupCb = cleanupCb.unsubscribe
+
+    if(cleanupCb === null || cleanupCb === undefined)
+      cleanupCb = noopFn
+
+    if('function' !== typeof cleanupCb)
+      throw new TypeError(`Invalid cleanup function: ${inspect(cleanupCb)}`)
+
+    subscription[pCleanup] = () => {
+      subscription[pIsClosed] = true
+      try { cleanupCb() } catch(e) { }
+    }
+
+    if(subscription.closed)
+      subscription[pCleanup]()
+
+    return subscription
   }
 
   [Symbol.observable]() {
