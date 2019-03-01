@@ -117,15 +117,55 @@ class MyObservable {
   }
 
   [Symbol.observable]() {
+    return this
+  }
+
+  static of(...items) {
+    let klass = this
+    if('function' !== typeof klass)
+      klass = MyObservable
+
+    return new klass(({ next, complete }) => {
+      for(let item of items)
+        next(item)
+      complete()
+    })
+  }
+
+  static from(arg) {
+    if(arg === null || arg === undefined)
+      throw new TypeError(`First arg can't be null or undefined for some reason`)
+
+    if(Symbol.observable in arg) {
+      const observable = arg[Symbol.observable]
+      if('function' === typeof observable) {
+        const returned = observable()
+        if(('function' !== typeof returned && 'object' !== typeof returned) || returned === null)
+          throw new TypeError(`Symbol.observable must return an object for some reason`)
+        if('function' === typeof returned) {
+          if(this === returned.constructor) {
+            console.log("IS CONSTRUCTOR", returned)
+            return returned
+          } else {
+            console.log("IS NOT CONSTRUCTOR")
+            const returned2 = new returned()
+            return returned2
+          }
+          return observable
+        }
+      } else {
+        throw new TypeError(`Symbol.observable must be a function`)
+      }
+    }
+
+    let klass = this
+    if('function' !== typeof klass)
+      klass = MyObservable
+
+
+    return new klass(() => {
+    })
   }
 }
 
-// const o = new MyObservable(
-//   function(idk) {
-//   }
-// )
-// console.log(
-//   o[Symbol.observable],
-//   Symbol.observable
-// )
 require("es-observable-tests").runTests(MyObservable);
