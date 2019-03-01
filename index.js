@@ -47,7 +47,7 @@ class Subscription {
 
     let needsCleanup = false
     let cleanup = () => {
-      log('cleanup')
+      // log('cleanup')
       needsCleanup = true
       this[pClosed] = true
     }
@@ -67,19 +67,23 @@ class Subscription {
         writable:     true,
         configurable: true,
         value: (val) => {
-          log('CALLING NEXT')
+          // log('CALLING NEXT')
+          // log({closed: this.closed})
           if(!this.closed && !needsCleanup && observer.next)
             return observer.next(val)
         },
       })
       prototype.error = (err) => {
-        cleanup()
+        this[pCleanupFn]()
         if(observer.error) observer.error(err)
         else throw err
       }
       prototype.complete = (val) => {
-        cleanup()
-        if(observer.complete) observer.complete(val)
+        // log({ cleanupFn: this[pCleanupFn] })
+        this[pClosed] = true
+        this[pCleanupFn]()
+        if('complete' in observer)
+          observer.complete(val)
       }
       tmp = emitter(Object.create(prototype))
     } catch(e) {
@@ -98,10 +102,10 @@ class Subscription {
     if('function' !== typeof tmp && tmp !== null && tmp !== undefined)
       throw new TypeError(`Invalid cleanup function: ${inspect(tmp)}`)
 
-    this[pCleanupFn] = cleanup = (tmp || noopFn)
+    this[pCleanupFn] = (tmp || noopFn)
 
     if(needsCleanup)
-      cleanup()
+      this[pCleanupFn]()
   }
 
   unsubscribe() {
