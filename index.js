@@ -53,7 +53,7 @@ class Subscription {
       }
 
       next(val) {
-        if(this[pIsClosed]) return
+        if(this.closed) return
         try { return this[pNextCb](val) }
         catch(err) {
           this[pCleanup]()
@@ -62,19 +62,19 @@ class Subscription {
       }
 
       error(err) {
-        if(this[pIsClosed]) throw err
+        if(this.closed) throw err
         this[pCleanup]()
         return this[pErrorCb](err, throwFn)
       }
 
       complete(val) {
-        if(this[pIsClosed]) return val
+        if(this.closed) return val
         this[pCleanup]()
         return this[pCompleteCb](val)
       }
 
       unsubscribe() {
-        return this[pIsClosed] || this[pCleanup]()
+        return this.closed || this[pCleanup]()
       }
     }
     const prototype = S.prototype
@@ -84,7 +84,7 @@ class Subscription {
 
     try {
       startCb(subscription)
-      if(!subscription[pIsClosed]) tmp = emitter(subscription)
+      if(!subscription.closed) tmp = emitter(subscription)
     } catch(e) {
       errorCb(e, throwFn)
     }
@@ -104,7 +104,7 @@ class Subscription {
         try { tmp() } catch(e) { }
       }
 
-    if(subscription[pIsClosed])
+    if(subscription.closed)
       subscription[pCleanup]()
 
     return subscription
