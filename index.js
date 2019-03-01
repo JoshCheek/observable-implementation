@@ -24,43 +24,9 @@ function log(...args) {
 
 Symbol.observable = Symbol.for("observable")
 
-const delegate = (obj, fnName, desc = fnName) => {
-  let fn, dneImpl
-  return (arg, ifDneRunThis) => {
-    dneImpl = (ifDneRunThis || noopFn)
-    if(!fn) {
-      let candidateFn = obj[fnName]
-      if(candidateFn === null || candidateFn == undefined)
-        candidateFn = (arg) => dneImpl(arg)
-      if('function' === typeof candidateFn)
-        fn = candidateFn
-      else
-        fn = () => {
-          throw new TypeError(`${inspect(obj)}.${fnName} should be the ${desc} function, instead its ${inspect(candidateFn)}`)
-        }
-    }
-    return fn.call(obj, arg)
-  }
-}
-
 class Subscription {
-  constructor(emitter, observer) {
+  constructor(emitter, startCb, nextCb, errorCb, completeCb) {
     let isClosed = false
-    let startCb, nextCb, errorCb, completeCb
-    if('function' === typeof observer) {
-      startCb    = noopFn
-      nextCb     = delegate(arguments, 1, 'next')
-      errorCb    = delegate(arguments, 2, 'error')
-      completeCb = delegate(arguments, 3, 'complete')
-    } else if ('object' === typeof observer && observer) {
-      startCb    = delegate(observer, 'start')
-      nextCb     = delegate(observer, 'next')
-      errorCb    = delegate(observer, 'error')
-      completeCb = delegate(observer, 'complete')
-    } else {
-      throw new TypeError("Observer arg must be an object or the onNext function")
-    }
-
     let cleanup = () => isClosed = true
 
     const prototype = new Object()
@@ -135,6 +101,25 @@ class Subscription {
   }
 }
 
+function delegate(obj, fnName, desc = fnName) {
+  let fn, dneImpl
+  return (arg, ifDneRunThis) => {
+    dneImpl = (ifDneRunThis || noopFn)
+    if(!fn) {
+      let candidateFn = obj[fnName]
+      if(candidateFn === null || candidateFn == undefined)
+        candidateFn = (arg) => dneImpl(arg)
+      if('function' === typeof candidateFn)
+        fn = candidateFn
+      else
+        fn = () => {
+          throw new TypeError(`${inspect(obj)}.${fnName} should be the ${desc} function, instead its ${inspect(candidateFn)}`)
+        }
+    }
+    return fn.call(obj, arg)
+  }
+}
+
 class MyObservable {
   constructor(emitter) {
     if("function" !== typeof emitter)
@@ -143,7 +128,22 @@ class MyObservable {
   }
 
   subscribe(observer) {
-    return new Subscription(this[pEmitter], ...arguments)
+    let startCb, nextCb, errorCb, completeCb
+    if('function' === typeof observer) {
+      startCb    = noopFn
+      nextCb     = delegate(arguments, 0, 'next')
+      errorCb    = delegate(arguments, 1, 'error')
+      completeCb = delegate(arguments, 2, 'complete')
+    } else if ('object' === typeof observer && observer) {
+      startCb    = delegate(observer, 'start')
+      nextCb     = delegate(observer, 'next')
+      errorCb    = delegate(observer, 'error')
+      completeCb = delegate(observer, 'complete')
+    } else {
+      throw new TypeError("Observer arg must be an object or the onNext function")
+    }
+
+    return new Subscription(this[pEmitter], startCb, nextCb, errorCb, completeCb)
   }
 
   [Symbol.observable]() {
