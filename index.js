@@ -105,6 +105,10 @@ class Subscription {
             return completeFn(val)
         }
       })
+      Object.defineProperty(prototype, 'closed', {
+        configurable: true,
+        get: () => this.closed
+      })
       tmp = emitter(Object.create(prototype))
     } catch(e) {
       if('error' in observer)
