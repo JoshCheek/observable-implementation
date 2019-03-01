@@ -45,18 +45,14 @@ class Subscription {
       try { cb = emitterCb(this) }
       catch(e) { errorCb(e, throwFn) }
 
-    cb = null      === cb && noopFn ||
-         undefined === cb && noopFn ||
-         cb.unsubscribe             ||
-         cb
+    this[pCleanupCb] =
+      'function' === typeof cb && cb ||
+      null       === cb && noopFn    ||
+      undefined  === cb && noopFn    ||
+      cb.unsubscribe                 ||
+      throwFn(new TypeError(`Invalid cleanup function: ${inspect(cb)}`))
 
-    if('function' !== typeof cb)
-      throw new TypeError(`Invalid cleanup function: ${inspect(cb)}`)
-
-    this[pCleanupCb] = cb
-
-    if(this.closed)
-      this[pCleanup]()
+    this.closed && this[pCleanup]()
   }
 
   get closed() {
