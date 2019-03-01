@@ -70,7 +70,6 @@ class Subscription {
     const prototype = new Object()
     const THIS2 = Object.create(prototype)
     Object.defineProperty(prototype, 'next', {
-      enumerable:   false,
       writable:     true,
       configurable: true,
       value:        (val) => {
