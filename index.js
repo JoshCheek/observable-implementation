@@ -87,9 +87,9 @@ class Subscription {
       writable:     true,
       configurable: true,
       value:        (err) => {
-        const closed = THIS2.closed
+        const wasClosed = isClosed
         cleanup()
-        if(closed) throw err
+        if(wasClosed) throw err
         return errorCb(err, throwFn)
       },
     })
@@ -99,9 +99,7 @@ class Subscription {
       value:        (val) => {
         if(isClosed) return val
         cleanup()
-        const completeFn = observer.complete
-        if(completeFn)
-          return completeFn(val)
+        return completeCb(val)
       }
     })
     Object.defineProperty(prototype, 'closed', {
