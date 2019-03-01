@@ -6,6 +6,7 @@ const pStartCb    = Symbol('startCb')
 const pNextCb     = Symbol('nextCb')
 const pErrorCb    = Symbol('errorCb')
 const pCompleteCb = Symbol('completeCb')
+const pCleanupCb  = Symbol('cleanupCb')
 const pCleanup    = Symbol('cleanup')
 const pIsClosed   = Symbol('closed?')
 
@@ -57,10 +58,7 @@ class Subscription {
     if('function' !== typeof cleanupCb)
       throw new TypeError(`Invalid cleanup function: ${inspect(cleanupCb)}`)
 
-    this[pCleanup] = () => {
-      this[pIsClosed] = true
-      try { cleanupCb() } catch(e) { }
-    }
+    this[pCleanupCb] = cleanupCb
 
     if(this.closed)
       this[pCleanup]()
@@ -70,8 +68,13 @@ class Subscription {
     return this[pIsClosed]
   }
 
+  [pCleanupCb]() {
+    // noop, override this when you get the real callback
+  }
+
   [pCleanup]() {
     this[pIsClosed] = true
+    try { this[pCleanupCb]() } catch(e) { }
   }
 
   next(val) {
