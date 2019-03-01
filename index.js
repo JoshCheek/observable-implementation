@@ -109,14 +109,9 @@ class Subscription {
 
     try {
       startCb(THIS2)
-      if(!isClosed)
-        tmp = emitter(THIS2)
+      if(!isClosed) tmp = emitter(THIS2)
     } catch(e) {
-      if('error' in observer)
-        observer.error(e)
-      else
-        throw e
-      return
+      errorCb(e, throwFn)
     }
 
     if('object' === typeof tmp && tmp !== null && 'function' === typeof tmp.unsubscribe) {
