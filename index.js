@@ -89,12 +89,13 @@ class Subscription {
       errorCb(e, throwFn)
     }
 
-    if('object' === typeof tmp && tmp !== null && 'function' === typeof tmp.unsubscribe) {
-      const subscription = tmp
-      tmp = () => subscription.unsubscribe()
-    }
+    if('object' === typeof tmp && tmp !== null && 'function' === typeof tmp.unsubscribe)
+      tmp = tmp.unsubscribe
 
-    if('function' !== typeof tmp && tmp !== null && tmp !== undefined)
+    if(tmp === null || tmp === undefined)
+      tmp = noopFn
+
+    if('function' !== typeof tmp)
       throw new TypeError(`Invalid cleanup function: ${inspect(tmp)}`)
 
     if(tmp)
