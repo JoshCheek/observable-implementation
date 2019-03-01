@@ -6,7 +6,6 @@ const pCleanupFn = Symbol('cleanupFn')
 const pNext      = Symbol('next')
 const pError     = Symbol('error')
 const pComplete  = Symbol('complete')
-const pObserver  = Symbol('observer')
 
 const noopFn  = (val) => {}
 const throwFn = (err) => { throw err }
@@ -30,8 +29,7 @@ Symbol.observable = Symbol.for("observable")
 class Subscription {
   constructor(emitter, observer) {
     this.constructor = Object // fkn whatever...
-    this[pClosed]    = false
-    this[pObserver]  = observer
+    this[pClosed] = false
 
     if(!observer || !('object' === typeof observer || 'function' === typeof observer) )
       throw new TypeError("Observer arg must be an object or the onNext function")
