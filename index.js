@@ -24,19 +24,45 @@ function log(...args) {
 
 Symbol.observable = Symbol.for("observable")
 
+const delegate = (obj, fnName, desc = fnName) => {
+  let fn
+  return (...args) => {
+    if(!fn) {
+      let candidateFn = obj[fnName]
+      if(candidateFn === null || candidateFn == undefined)
+        candidateFn = noopFn
+      if('function' === typeof candidateFn)
+        fn = candidateFn
+      else
+        fn = () => {
+          throw new TypeError(`${inspect(obj)}.${fnName} should be the ${desc} function, instead its ${inspect(candidateFn)}`)
+        }
+    }
+    return fn(...args)
+  }
+}
+
 class Subscription {
   constructor(emitter, observer) {
     let isClosed = false
 
-    if(!observer || !('object' === typeof observer || 'function' === typeof observer) )
-      throw new TypeError("Observer arg must be an object or the onNext function")
-
-    if('function' === typeof observer)
+    let nextCb, errorCb, completeCb
+    if('function' === typeof observer) {
       observer = {
         next:     arguments[1],
         error:    arguments[2],
         complete: arguments[3],
       }
+      nextCb     = delegate(arguments, 1, 'next')
+      errorCb    = delegate(arguments, 2, 'error')
+      completeCb = delegate(arguments, 3, 'complete')
+    } else if ('object' === typeof observer && observer) {
+      nextCb     = delegate(observer, 'next')
+      errorCb    = delegate(observer, 'error')
+      completeCb = delegate(observer, 'complete')
+    } else {
+      throw new TypeError("Observer arg must be an object or the onNext function")
+    }
 
     let cleanup = () => isClosed = true
 
@@ -48,13 +74,11 @@ class Subscription {
       configurable: true,
       value:        (val) => {
         if(!THIS2.closed) {
-          const next = observer.next
-          if(next)
-            try { return next(val) }
-            catch(nextError) {
-              cleanup()
-              throw nextError
-            }
+          try { return nextCb(val) }
+          catch(nextError) {
+            cleanup()
+            throw nextError
+          }
         }
       },
     })
