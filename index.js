@@ -32,14 +32,12 @@ class Subscription {
     if(!observer || !('object' === typeof observer || 'function' === typeof observer) )
       throw new TypeError("Observer arg must be an object or the onNext function")
 
-    if('function' === typeof observer) {
-      const { 1: onNext, 2: onError, 3: onComplete } = arguments
+    if('function' === typeof observer)
       observer = {
-        next:     onNext,
-        error:    onError,
-        complete: onComplete,
+        next:     arguments[1],
+        error:    arguments[2],
+        complete: arguments[3],
       }
-    }
 
     let needsCleanup = false
     let cleanup = () => {
