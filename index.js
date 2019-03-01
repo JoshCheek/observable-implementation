@@ -29,8 +29,8 @@ function log(...args) {
 Symbol.observable = Symbol.for("observable")
 
 class Subscription {
-  constructor(startCb, nextCb, errorCb, completeCb) {
-    this.constructor = Object // wtf even is this?
+  constructor(emitter, startCb, nextCb, errorCb, completeCb) {
+    this.constructor  = Object // wtf even is this?
     this[pStartCb]    = startCb
     this[pNextCb]     = nextCb
     this[pErrorCb]    = errorCb
@@ -40,6 +40,34 @@ class Subscription {
     this.complete     = this.complete.bind(this)
     this.unsubscribe  = this.unsubscribe.bind(this)
     this[pIsClosed]   = false
+
+    const subscription = this
+
+    startCb(subscription)
+
+    let cleanupCb
+    if(!subscription.closed)
+      try { cleanupCb = emitter(subscription) }
+      catch(e) { errorCb(e, throwFn) }
+
+    if('object' === typeof cleanupCb && cleanupCb !== null && 'function' === typeof cleanupCb.unsubscribe)
+      cleanupCb = cleanupCb.unsubscribe
+
+    if(cleanupCb === null || cleanupCb === undefined)
+      cleanupCb = noopFn
+
+    if('function' !== typeof cleanupCb)
+      throw new TypeError(`Invalid cleanup function: ${inspect(cleanupCb)}`)
+
+    subscription[pCleanup] = () => {
+      subscription[pIsClosed] = true
+      try { cleanupCb() } catch(e) { }
+    }
+
+    if(subscription.closed)
+      subscription[pCleanup]()
+
+    return subscription
   }
 
   get closed() {
@@ -118,33 +146,7 @@ class MyObservable {
       throw new TypeError("Observer arg must be an object or the onNext function")
     }
 
-    const subscription = new Subscription(startCb, nextCb, errorCb, completeCb)
-
-    startCb(subscription)
-
-    let cleanupCb
-    if(!subscription.closed)
-      try { cleanupCb = this[pEmitter](subscription) }
-      catch(e) { errorCb(e, throwFn) }
-
-    if('object' === typeof cleanupCb && cleanupCb !== null && 'function' === typeof cleanupCb.unsubscribe)
-      cleanupCb = cleanupCb.unsubscribe
-
-    if(cleanupCb === null || cleanupCb === undefined)
-      cleanupCb = noopFn
-
-    if('function' !== typeof cleanupCb)
-      throw new TypeError(`Invalid cleanup function: ${inspect(cleanupCb)}`)
-
-    subscription[pCleanup] = () => {
-      subscription[pIsClosed] = true
-      try { cleanupCb() } catch(e) { }
-    }
-
-    if(subscription.closed)
-      subscription[pCleanup]()
-
-    return subscription
+    return new Subscription(this[pEmitter], startCb, nextCb, errorCb, completeCb)
   }
 
   [Symbol.observable]() {
