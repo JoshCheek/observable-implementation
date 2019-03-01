@@ -32,15 +32,6 @@ class Subscription {
     this.constructor = Object // fkn whatever...
     this[pClosed]    = false
     this[pObserver]  = observer
-    // this[pNext]      = nextFn
-    // this[pError]     = errorFn
-    // this[pComplete]  = completeFn
-
-    // { start: startFn,
-    //     next: nextFn,
-    //     error: errorFn,
-    //     complete: completeFn
-    // }
 
     if(!observer || !('object' === typeof observer || 'function' === typeof observer) )
       throw new TypeError("Observer arg must be an object or the onNext function")
