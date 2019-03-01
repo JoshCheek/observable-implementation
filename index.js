@@ -52,8 +52,7 @@ class Subscription {
           if(next)
             try { return next(val) }
             catch(nextError) {
-              try { cleanup() }
-              catch(cleanupError) { }
+              cleanup()
               throw nextError
             }
         }
@@ -64,7 +63,7 @@ class Subscription {
       configurable: true,
       value:        (err) => {
         const closed = THIS2.closed
-        try { cleanup() } catch(e) { }
+        cleanup()
         if(closed) throw err
         const errorFn = observer.error
         if(errorFn)
@@ -76,9 +75,8 @@ class Subscription {
       writable:     true,
       configurable: true,
       value:        (val) => {
-        if(isClosed)
-          try { return val } catch(e) { }
-        try { cleanup() } catch(e) { }
+        if(isClosed) return val
+        cleanup()
         const completeFn = observer.complete
         if(completeFn)
           return completeFn(val)
@@ -126,7 +124,7 @@ class Subscription {
     if(tmp)
       cleanup = () => {
         isClosed = true
-        tmp()
+        try { tmp() } catch(e) { }
       }
 
     if(isClosed)
