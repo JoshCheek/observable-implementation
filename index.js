@@ -148,10 +148,6 @@ class MyObservable {
 
     if(Symbol.observable in arg) {
       const observable = arg[Symbol.observable]()
-      if('function' === typeof observable)
-        return `The test drove me to write this if statement,
-                I have no clue what it's supposed to mean.
-                And this passes the tests :/`
       if('subscribe' in observable)
         return new this(arg => observable.subscribe(arg))
       return observable
