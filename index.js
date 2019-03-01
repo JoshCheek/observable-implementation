@@ -29,20 +29,19 @@ class Subscription {
     let isClosed = false
     let cleanup = () => isClosed = true
 
-    const prototype = new Object()
-    const THIS2 = Object.create(prototype)
-    Object.defineProperty(prototype, 'next', {
-      writable:     true,
-      configurable: true,
-      value:        (val) => {
+    class S {
+      next(val) {
         if(isClosed) return
         try { return nextCb(val) }
         catch(err) {
           cleanup()
           throw err
         }
-      },
-    })
+      }
+    }
+    const prototype = S.prototype
+    prototype.constructor = Object
+    const THIS2 = new S()
     Object.defineProperty(prototype, 'error', {
       writable:     true,
       configurable: true,
