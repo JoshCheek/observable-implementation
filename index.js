@@ -143,9 +143,6 @@ class MyObservable {
   }
 
   static from(arg) {
-    if(arg === null || arg === undefined)
-      throw new TypeError(`First arg can't be null or undefined for some reason`)
-
     if(Symbol.observable in arg) {
       const observable = arg[Symbol.observable]()
       if('subscribe' in observable)
