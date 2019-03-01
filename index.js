@@ -80,26 +80,26 @@ class Subscription {
     const prototype = S.prototype
     const subscription = new S(startCb, nextCb, errorCb, completeCb)
 
-    let tmp
+    let cleanupCb
     try {
       startCb(subscription)
-      subscription.closed || (tmp = emitter(subscription))
+      subscription.closed || (cleanupCb = emitter(subscription))
     } catch(e) {
       errorCb(e, throwFn)
     }
 
-    if('object' === typeof tmp && tmp !== null && 'function' === typeof tmp.unsubscribe)
-      tmp = tmp.unsubscribe
+    if('object' === typeof cleanupCb && cleanupCb !== null && 'function' === typeof cleanupCb.unsubscribe)
+      cleanupCb = cleanupCb.unsubscribe
 
-    if(tmp === null || tmp === undefined)
-      tmp = noopFn
+    if(cleanupCb === null || cleanupCb === undefined)
+      cleanupCb = noopFn
 
-    if('function' !== typeof tmp)
-      throw new TypeError(`Invalid cleanup function: ${inspect(tmp)}`)
+    if('function' !== typeof cleanupCb)
+      throw new TypeError(`Invalid cleanup function: ${inspect(cleanupCb)}`)
 
     subscription[pCleanup] = () => {
       subscription[pIsClosed] = true
-      try { tmp() } catch(e) { }
+      try { cleanupCb() } catch(e) { }
     }
 
     if(subscription.closed)
