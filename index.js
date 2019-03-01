@@ -147,47 +147,23 @@ class MyObservable {
       throw new TypeError(`First arg can't be null or undefined for some reason`)
 
     if(Symbol.observable in arg) {
-      const observable = arg[Symbol.observable]
-      if('function' !== typeof observable)
+      const getObservable = arg[Symbol.observable]
+      if('function' !== typeof getObservable)
         throw new TypeError(`Symbol.observable must be a function`)
 
-      const returned = observable()
-      if(('function' !== typeof returned && 'object' !== typeof returned) || returned === null)
-        throw new TypeError(`Symbol.observable must return an object for some reason`)
-      if('function' === typeof returned) {
-        if(this === returned.constructor) {
-          log("IS CONSTRUCTOR", returned)
-          return returned
-        } else {
-          log("IS NOT CONSTRUCTOR")
-          const returned2 = new returned()
-          return returned2
-        }
+      const observable = getObservable()
+      if('function' === typeof observable) {
+        log('hiiiiiiiii')
+        return new observable() // <-- surely that's wrong, right?
+      } else if ('object' === typeof observable && observable !== null) {
+        if('subscribe' in observable)
+          return new this(arg => observable.subscribe(arg))
         return observable
-      } else if ('object' === typeof returned && returned !== null) {
-        if('subscribe' in returned) {
-          log('HAS SUBSCRIBE')
-          // log('arg[Symbol.observable] IS', observable.toString())
-          // log('arg[Symbol.observable]() IS', returned)
-          // const returned2 = returned.subscribe()
-          // log('RETURNED2: ', returned2)
-          // log('THIS: ', this.toString())
-          // log('ARG: ', arg)
-          return new this(function(arg) {
-            return returned.subscribe(arg)
-          })
-          // return returned2
-        } else {
-          log('NO SUBSCRIBE')
-          // log('arg[Symbol.observable]() IS', returned)
-          // log('IT HAS NO SUBSCRIBE METHOD')
-          return returned
-        }
       } else {
-        log('FKN IDK')
+        log('boom')
+        throw new TypeError(`Symbol.observable must return an object for some reason`)
       }
     }
-    log('PAST `if` HELL')
 
     let klass = this
     if('function' !== typeof klass)
