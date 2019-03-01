@@ -147,17 +147,11 @@ class MyObservable {
       throw new TypeError(`First arg can't be null or undefined for some reason`)
 
     if(Symbol.observable in arg) {
-      const getObservable = arg[Symbol.observable]
-      if('function' !== typeof getObservable)
-        throw new TypeError(`Symbol.observable must be a function`)
-
-      const observable = getObservable()
+      const observable = arg[Symbol.observable]()
       if('function' === typeof observable)
         return `The test drove me to write this if statement,
                 I have no clue what it's supposed to mean.
                 And this passes the tests :/`
-      if ('object' !== typeof observable || observable === null)
-        throw new TypeError(`Symbol.observable property returned a non observable: ${inspect(observable)}`)
       if('subscribe' in observable)
         return new this(arg => observable.subscribe(arg))
       return observable
