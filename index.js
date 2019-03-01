@@ -45,6 +45,11 @@ class Subscription {
         // this.error        = this.error.bind(this) // tests don't fail when I leave this commented out
         this.complete     = this.complete.bind(this)
       }
+
+      get closed() {
+        return isClosed
+      }
+
       next(val) {
         if(isClosed) return
         try { return this[pNextCb](val) }
@@ -53,19 +58,19 @@ class Subscription {
           throw err
         }
       }
+
       error(err) {
         if(isClosed) throw err
         cleanup()
         return this[pErrorCb](err, throwFn)
       }
+
       complete(val) {
         if(isClosed) return val
         cleanup()
         return this[pCompleteCb](val)
       }
-      get closed() {
-        return isClosed
-      }
+
       unsubscribe() {
         return isClosed || cleanup()
       }
