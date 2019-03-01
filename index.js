@@ -53,12 +53,14 @@ class Subscription {
     let tmp
     try {
       const prototype = new Object()
+      const THIS2 = Object.create(prototype)
+      this.THIS2 = THIS2
       Object.defineProperty(prototype, 'next', {
         enumerable:   false,
         writable:     true,
         configurable: true,
         value:        (val) => {
-          if(!this.closed && !needsCleanup) {
+          if(!THIS2.closed && !needsCleanup) {
             const next = observer.next
             if(next)
               try { return next(val) }
@@ -74,7 +76,7 @@ class Subscription {
         writable:     true,
         configurable: true,
         value:        (err) => {
-          const closed = this.closed
+          const closed = THIS2.closed
           try { this[pCleanupFn]() } catch(e) { }
           if(closed) throw err
           const errorFn = observer.error
@@ -87,7 +89,7 @@ class Subscription {
         writable:     true,
         configurable: true,
         value:        (val) => {
-          if(this.closed)
+          if(THIS2.closed)
             try { return val } catch(e) { }
           this[pClosed] = true
           try { this[pCleanupFn]() } catch(e) { }
@@ -110,13 +112,10 @@ class Subscription {
         }
       })
 
-      const THIS2 = Object.create(prototype)
-      this.THIS2 = THIS2
-
       if(observer.start)
         observer.start(THIS2)
 
-      if(this.closed)
+      if(THIS2.closed)
         return
 
       tmp = emitter(THIS2)
@@ -146,10 +145,6 @@ class Subscription {
     if(this[pClosed]) return
     this[pClosed] = true
     this[pCleanupFn]()
-  }
-
-  get closed() {
-    return this[pClosed]
   }
 }
 
