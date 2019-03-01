@@ -57,13 +57,13 @@ class Subscription {
     }
     const prototype = S.prototype
     prototype.constructor = Object
-    const THIS2 = new S()
+    const subscription = new S()
 
     let tmp
 
     try {
-      startCb(THIS2)
-      if(!isClosed) tmp = emitter(THIS2)
+      startCb(subscription)
+      if(!isClosed) tmp = emitter(subscription)
     } catch(e) {
       errorCb(e, throwFn)
     }
@@ -85,7 +85,7 @@ class Subscription {
     if(isClosed)
       cleanup()
 
-    return THIS2
+    return subscription
   }
 }
 
