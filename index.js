@@ -77,16 +77,15 @@ class Subscription {
         return this.closed || this[pCleanup]()
       }
     }
-    const prototype = S.prototype
+
     const subscription = new S(startCb, nextCb, errorCb, completeCb)
 
+    startCb(subscription)
+
     let cleanupCb
-    try {
-      startCb(subscription)
-      subscription.closed || (cleanupCb = emitter(subscription))
-    } catch(e) {
-      errorCb(e, throwFn)
-    }
+    if(!subscription.closed)
+      try { cleanupCb = emitter(subscription) }
+      catch(e) { errorCb(e, throwFn) }
 
     if('object' === typeof cleanupCb && cleanupCb !== null && 'function' === typeof cleanupCb.unsubscribe)
       cleanupCb = cleanupCb.unsubscribe
