@@ -39,19 +39,21 @@ const delegate = (obj, fnName, desc = fnName) => {
           throw new TypeError(`${inspect(obj)}.${fnName} should be the ${desc} function, instead its ${inspect(candidateFn)}`)
         }
     }
-    return fn(arg)
+    return fn.call(obj, arg)
   }
 }
 
 class Subscription {
   constructor(emitter, observer) {
     let isClosed = false
-    let nextCb, errorCb, completeCb
+    let startCb, nextCb, errorCb, completeCb
     if('function' === typeof observer) {
+      startCb    = noopFn
       nextCb     = delegate(arguments, 1, 'next')
       errorCb    = delegate(arguments, 2, 'error')
       completeCb = delegate(arguments, 3, 'complete')
     } else if ('object' === typeof observer && observer) {
+      startCb    = delegate(observer, 'start')
       nextCb     = delegate(observer, 'next')
       errorCb    = delegate(observer, 'error')
       completeCb = delegate(observer, 'complete')
@@ -106,13 +108,9 @@ class Subscription {
     let tmp
 
     try {
-      if(observer.start)
-        observer.start(THIS2)
-
-      if(isClosed)
-        return
-
-      tmp = emitter(THIS2)
+      startCb(THIS2)
+      if(!isClosed)
+        tmp = emitter(THIS2)
     } catch(e) {
       if('error' in observer)
         observer.error(e)
