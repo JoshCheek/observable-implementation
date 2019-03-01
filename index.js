@@ -2,9 +2,6 @@ const util = require('util')
 
 // private property names
 const pEmitter    = Symbol('emitter')
-const pNext       = Symbol('next')
-const pError      = Symbol('error')
-const pComplete   = Symbol('complete')
 const pStartCb    = Symbol('startCb')
 const pNextCb     = Symbol('nextCb')
 const pErrorCb    = Symbol('errorCb')
