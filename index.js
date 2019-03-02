@@ -101,6 +101,13 @@ function delegate(obj, fnName, desc = fnName) {
     ).call(obj, arg)
 }
 
+function constructorFor(maybeConstructor) {
+  if('function' === typeof maybeConstructor)
+    return maybeConstructor
+  else
+    return MyObservable
+}
+
 class MyObservable {
   constructor(emitter) {
     if("function" !== typeof emitter)
@@ -132,11 +139,8 @@ class MyObservable {
   }
 
   static of(...items) {
-    let klass = this
-    if('function' !== typeof klass)
-      klass = MyObservable
-
-    return new klass(({ next, complete }) => {
+    const Observable = constructorFor(this)
+    return new Observable(({ next, complete }) => {
       for(let item of items)
         next(item)
       complete()
@@ -144,9 +148,7 @@ class MyObservable {
   }
 
   static from(toConvert) {
-    let Observable = this
-    if('function' !== typeof Observable)
-      Observable = MyObservable
+    const Observable = constructorFor(this)
 
     if(Symbol.observable in toConvert) {
       const observable = toConvert[Symbol.observable]()
