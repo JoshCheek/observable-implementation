@@ -28,7 +28,7 @@ const nocolor = ()    => `\x1b[0m`
 const log = (...args) =>
   // Print strings in magenta and inspects/highlights non-strings
   args.forEach(arg => console.log(
-    isStr(arg) ? magenta(arg) + nocolor() : inspect(arg)
+    isStr(arg) ? magenta(arg)+nocolor() : inspect(arg)
   ))
 
 const constructorFor = (maybeConstructor) =>
