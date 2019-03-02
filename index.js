@@ -9,7 +9,7 @@ const pCleanupCb  = Symbol('cleanupCb')
 const pIsClosed   = Symbol('closed?')
 
 const noopFn  = (val) => {}
-const throwFn = (e)   => { throw e }
+const throwFn = (err) => { throw err }
 const inspect = (val) => util.inspect(val, { colors: true })
 const red     = (str) => `\x1b[31m${str}`
 const green   = (str) => `\x1b[32m${str}`
@@ -25,6 +25,16 @@ const log = (...args) =>
       : inspect(arg)             // print non-strings as inspected/highlighted objects
     )
   )
+
+const constructorFor = (maybeConstructor) =>
+  'function' === typeof maybeConstructor
+    ? maybeConstructor
+    : MyObservable
+
+const forEach = (collection, callback) => {
+  for(let element of collection)
+    callback(element)
+}
 
 Symbol.observable = Symbol.for("observable")
 
@@ -106,16 +116,6 @@ function delegate(obj, fnName, desc = fnName) {
              obj[fnName] || ifDneRunThis || noopFn
            ))
     ).call(obj, arg)
-}
-
-function constructorFor(maybeConstructor) {
-  return 'function' === typeof maybeConstructor
-    ? maybeConstructor
-    : MyObservable
-}
-function forEach(collection, callback) {
-  for(let element of collection)
-    callback(element)
 }
 
 class MyObservable {
