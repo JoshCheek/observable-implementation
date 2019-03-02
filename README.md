@@ -1,4 +1,5 @@
-Implementing the Observable API as a learning experience.
+Implementing the [Observable API](https://github.com/tc39/proposal-observable)
+as a learning experience.
 
 Install dependencies:
 
