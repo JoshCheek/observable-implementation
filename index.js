@@ -25,24 +25,34 @@ const yellow  = (str) => `\x1b[33m${str}`
 const magenta = (str) => `\x1b[35m${str}`
 const nocolor = ()    => `\x1b[0m`
 
-// print strings in magenta and inspects/highlights non-strings
 const log = (...args) =>
+  // print strings in magenta and inspects/highlights non-strings
   args.forEach(arg => console.log(
     isStr(arg) ? magenta(arg) + nocolor() : inspect(arg)
   ))
 
 const constructorFor = (maybeConstructor) =>
-  isFn(maybeConstructor)
-    ? maybeConstructor
-    : MyObservable
+  isFn(maybeConstructor) ? maybeConstructor : MyObservable
 
 const forEach = (collection, callback) => {
   for(let element of collection)
     callback(element)
 }
 
-Symbol.observable = Symbol.for("observable")
+const validateFn = (errMsg, fn) =>
+  isFn(fn) ? fn : typeErr(errMsg)
 
+function delegate(obj, fnName, desc = fnName) {
+  let fn
+  return (arg, ifDneRunThis) =>
+    (fn || (fn = validateFn(
+             `${inspect(obj)}.${fnName} should be the ${desc} function, instead its ${inspect(fn)}`,
+             obj[fnName] || ifDneRunThis || noopFn
+           ))
+    ).call(obj, arg)
+}
+
+// After looking at their class, they implemented this as 2 different objects *sigh*
 class Subscription {
   constructor(emitterCb, startCb, nextCb, errorCb, completeCb) {
     this.constructor  = Object // wtf even is this?
@@ -107,20 +117,7 @@ class Subscription {
   }
 }
 
-function validateFn(errMsg, fn) {
-  if(isFn(fn)) return fn
-  throw new TypeError(errMsg)
-}
-
-function delegate(obj, fnName, desc = fnName) {
-  let fn
-  return (arg, ifDneRunThis) =>
-    (fn || (fn = validateFn(
-             `${inspect(obj)}.${fnName} should be the ${desc} function, instead its ${inspect(fn)}`,
-             obj[fnName] || ifDneRunThis || noopFn
-           ))
-    ).call(obj, arg)
-}
+Symbol.observable = Symbol.for("observable")
 
 class MyObservable {
   constructor(emitter) {
