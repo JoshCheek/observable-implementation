@@ -11,13 +11,18 @@ const pIsClosed   = Symbol('closed?')
 const noopFn  = (val) => {}
 const throwFn = (e)   => { throw e }
 const inspect = (val) => util.inspect(val, { colors: true })
+const red     = (str) => `\x1b[31m${str}`
+const green   = (str) => `\x1b[32m${str}`
+const yellow  = (str) => `\x1b[33m${str}`
+const magenta = (str) => `\x1b[35m${str}`
+const nocolor = ()    => `\x1b[0m`
 
 const log = (...args) =>
   args.forEach(arg =>
     console.log(
       ('string' === typeof arg)
-      ? `\x1b[35m${arg}\x1b[0m` // print strings in magenta
-      : inspect(arg)            // print non-strings as inspected/highlighted objects
+      ? magenta(arg) + nocolor() // print strings in magenta
+      : inspect(arg)             // print non-strings as inspected/highlighted objects
     )
   )
 
@@ -169,9 +174,9 @@ class MyObservable {
 require("es-observable-tests")
   .runTests(MyObservable)
   .then(({logger: { passed, failed, errored }}) => {
-    let status = `\x1b[32m${passed}`
-    if(failed)  status += ` \x1b[31m${failed}`
-    if(errored) status += ` \x1b[33m${errored}`
+    let status = green(passed)
+    if(failed)  status += red(` ${failed}`)
+    if(errored) status += yellow(` ${errored}`)
     console.log(status)
     if(failed || errored)
       process.exit(1)
