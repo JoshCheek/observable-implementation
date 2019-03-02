@@ -42,9 +42,11 @@ class Subscription {
     startCb(this)
 
     let cb
-    if(!this.closed)
-      try { cb = emitterCb(this) }
-      catch(e) { errorCb(e, throwFn) }
+    try {
+      this.closed || (cb = emitterCb(this))
+    } catch(e) {
+      errorCb(e, throwFn)
+    }
 
     this[pCleanupCb] =
       'function' === typeof cb && cb ||
@@ -107,10 +109,9 @@ function delegate(obj, fnName, desc = fnName) {
 }
 
 function constructorFor(maybeConstructor) {
-  if('function' === typeof maybeConstructor)
-    return maybeConstructor
-  else
-    return MyObservable
+  return 'function' === typeof maybeConstructor
+    ? maybeConstructor
+    : MyObservable
 }
 
 class MyObservable {
