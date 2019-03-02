@@ -8,26 +8,31 @@ const pCompleteCb = Symbol('completeCb')
 const pCleanupCb  = Symbol('cleanupCb')
 const pIsClosed   = Symbol('closed?')
 
+// helper functions
 const noopFn  = (val) => {}
 const throwFn = (err) => { throw err }
+const typeErr = (msg) => throwFn(new TypeError(msg))
 const inspect = (val) => util.inspect(val, { colors: true })
+const isFn    = (fn)  => 'function' === typeof fn
+const isStr   = (str) => 'string'   === typeof str
+const isNull  = (obj) => null       === obj
+const isUndef = (obj) => undefined  === obj
+const isBlank = (obj) => isNull(obj) || isUndef(obj)
+const isObj   = (obj) => obj && 'object' === typeof obj
 const red     = (str) => `\x1b[31m${str}`
 const green   = (str) => `\x1b[32m${str}`
 const yellow  = (str) => `\x1b[33m${str}`
 const magenta = (str) => `\x1b[35m${str}`
 const nocolor = ()    => `\x1b[0m`
 
+// print strings in magenta and inspects/highlights non-strings
 const log = (...args) =>
-  args.forEach(arg =>
-    console.log(
-      ('string' === typeof arg)
-      ? magenta(arg) + nocolor() // print strings in magenta
-      : inspect(arg)             // print non-strings as inspected/highlighted objects
-    )
-  )
+  args.forEach(arg => console.log(
+    isStr(arg) ? magenta(arg) + nocolor() : inspect(arg)
+  ))
 
 const constructorFor = (maybeConstructor) =>
-  'function' === typeof maybeConstructor
+  isFn(maybeConstructor)
     ? maybeConstructor
     : MyObservable
 
@@ -59,11 +64,10 @@ class Subscription {
     }
 
     this[pCleanupCb] =
-      'function' === typeof cb && cb ||
-      null       === cb && noopFn    ||
-      undefined  === cb && noopFn    ||
-      cb.unsubscribe                 ||
-      throwFn(new TypeError(`Invalid cleanup function: ${inspect(cb)}`))
+      isFn(cb)    && cb     ||
+      isBlank(cb) && noopFn ||
+      cb.unsubscribe        ||
+      typeErr(`Invalid cleanup function: ${inspect(cb)}`)
 
     this.closed && this.unsubscribe({ force: true })
   }
@@ -104,7 +108,7 @@ class Subscription {
 }
 
 function validateFn(errMsg, fn) {
-  if('function' === typeof fn) return fn
+  if(isFn(fn)) return fn
   throw new TypeError(errMsg)
 }
 
@@ -120,25 +124,25 @@ function delegate(obj, fnName, desc = fnName) {
 
 class MyObservable {
   constructor(emitter) {
-    if("function" !== typeof emitter)
+    if(!isFn(emitter))
       throw new TypeError("First arg must be callable")
     this[pEmitterCb] = emitter
   }
 
   subscribe(observer) {
     let startCb, nextCb, errorCb, completeCb
-    if('function' === typeof observer) {
+    if(isFn(observer)) {
       startCb    = noopFn
       nextCb     = delegate(arguments, 0, 'next')
       errorCb    = delegate(arguments, 1, 'error')
       completeCb = delegate(arguments, 2, 'complete')
-    } else if ('object' === typeof observer && observer) {
+    } else if(isObj(observer)) {
       startCb    = delegate(observer, 'start')
       nextCb     = delegate(observer, 'next')
       errorCb    = delegate(observer, 'error')
       completeCb = delegate(observer, 'complete')
     } else {
-      throw new TypeError("Observer arg must be an object or the onNext function")
+      typeErr("Observer arg must be an object or the onNext function")
     }
 
     return new Subscription(this[pEmitterCb], startCb, nextCb, errorCb, completeCb)
