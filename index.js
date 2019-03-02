@@ -1,6 +1,6 @@
 const util = require('util')
 
-// private property names
+// Private property names
 const pEmitterCb  = Symbol('emitterCb')
 const pNextCb     = Symbol('nextCb')
 const pErrorCb    = Symbol('errorCb')
@@ -8,7 +8,7 @@ const pCompleteCb = Symbol('completeCb')
 const pCleanupCb  = Symbol('cleanupCb')
 const pIsClosed   = Symbol('closed?')
 
-// helper functions
+// Helper functions
 const noopFn  = (val) => {}
 const throwFn = (err) => { throw err }
 const typeErr = (msg) => throwFn(new TypeError(msg))
@@ -26,7 +26,7 @@ const magenta = (str) => `\x1b[35m${str}`
 const nocolor = ()    => `\x1b[0m`
 
 const log = (...args) =>
-  // print strings in magenta and inspects/highlights non-strings
+  // Print strings in magenta and inspects/highlights non-strings
   args.forEach(arg => console.log(
     isStr(arg) ? magenta(arg) + nocolor() : inspect(arg)
   ))
@@ -66,17 +66,15 @@ class Subscription {
 
     startCb(this)
 
-    if(!this.closed)
-      try {
-        const cb = emitterCb(this)
-        this[pCleanupCb] =
-          isFn(cb)    && cb     ||
-          isBlank(cb) && noopFn ||
-          cb.unsubscribe        ||
-          typeErr(`Invalid cleanup function: ${inspect(cb)}`)
-      } catch(e) {
-        errorCb(e, throwFn)
-      }
+    if(!this.closed) {
+      let cb // statements 🙄
+      try { cb = emitterCb(this) } catch(e) { errorCb(e, throwFn) }
+      this[pCleanupCb] =
+        isFn(cb)    && cb     ||
+        isBlank(cb) && noopFn ||
+        cb.unsubscribe        ||
+        typeErr(`Invalid cleanup function: ${inspect(cb)}`)
+    }
 
     this.closed && this.unsubscribe({ force: true })
   }
@@ -94,6 +92,9 @@ class Subscription {
     } catch(e) { } // why do we hide errors?
   }
 
+  // Tried like 5 times to have these functions delegate their logic to a common
+  // helper function (eg pushing it into unsubscribe), but in the end, I think
+  // it always made it worse.
   next(val) {
     if(this.closed) return
     try { return this[pNextCb](val) }
@@ -116,19 +117,17 @@ class Subscription {
   }
 }
 
-// a new "well known" symbol
+// A new "well known" symbol
 Symbol.observable = Symbol.for("observable")
 
-// entry point
+// Entry point
 class MyObservable {
   constructor(emitter) {
-    if(!isFn(emitter))
-      throw new TypeError("First arg must be callable")
+    isFn(emitter) || typeErr("First arg must be callable")
     this[pEmitterCb] = emitter
   }
 
-  // Conflating interfaces is generally a bad practice
-  // but, what can I do, I didn't write the spec
+  // Note that conflating interfaces is generally a bad practice
   subscribe(observer) {
     let startCb, nextCb, errorCb, completeCb
     if(isFn(observer)) {
@@ -148,11 +147,11 @@ class MyObservable {
     return new Subscription(this[pEmitterCb], startCb, nextCb, errorCb, completeCb)
   }
 
-  // you know, if they called it 'then' instead of 'next', and then they added
-  // a "done" callback to promises, and fixed iterators to work async (I read that
-  // they were going to, but it's not working for me at present) then they could
-  // merge observables, iterators, and promises. (Promise would just need to call
-  // .done after its resolve function did its thing)
+  // You know, if they called it 'then' instead of 'next', and then they added
+  // a "done" callback to promises (call it from resolve, after invoking .then),
+  // and fixed iterators to work async (I read that they were going to, but it's
+  // not working for me at present) then they could merge observables, iterators,
+  // and promises.
   [Symbol.observable]() {
     return this
   }
@@ -166,7 +165,7 @@ class MyObservable {
   }
 
   static from(toConvert) {
-    // the amount of pain caused by JS's late binding of `this` is pretty shocking
+    // The amount of pain caused by JS's late binding of `this` is pretty shocking
     const Observable = constructorFor(this)
 
     if(Symbol.observable in toConvert) {
@@ -184,7 +183,7 @@ class MyObservable {
 
 }
 
-// run the test suite against it
+// Run the test suite against it
 require("es-observable-tests")
   .runTests(MyObservable)
   .then(({logger: { passed, failed, errored }}) => {
