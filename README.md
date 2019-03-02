@@ -18,6 +18,6 @@ node index.js | less -R
 function r
     if node index.js
         fg
-    end | ruby -00ne 'print if /\e\[31m/; END { print }'
+    end | ruby -00ne 'print if /\e\[31m/ || ARGF.eof?'
 end
 ```
