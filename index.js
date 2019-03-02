@@ -66,18 +66,17 @@ class Subscription {
 
     startCb(this)
 
-    let cb
-    try {
-      this.closed || (cb = emitterCb(this))
-    } catch(e) {
-      errorCb(e, throwFn)
-    }
-
-    this[pCleanupCb] =
-      isFn(cb)    && cb     ||
-      isBlank(cb) && noopFn ||
-      cb.unsubscribe        ||
-      typeErr(`Invalid cleanup function: ${inspect(cb)}`)
+    if(!this.closed)
+      try {
+        const cb = emitterCb(this)
+        this[pCleanupCb] =
+          isFn(cb)    && cb     ||
+          isBlank(cb) && noopFn ||
+          cb.unsubscribe        ||
+          typeErr(`Invalid cleanup function: ${inspect(cb)}`)
+      } catch(e) {
+        errorCb(e, throwFn)
+      }
 
     this.closed && this.unsubscribe({ force: true })
   }
@@ -86,7 +85,7 @@ class Subscription {
     return !!this[pIsClosed]
   }
 
-  [pCleanupCb]() { } // noop, override this when you get the real callback
+  [pCleanupCb]() { } // noop, override this when we get the real callback
 
   unsubscribe(opts={}) {
     if(opts.force || !this.closed) try {
