@@ -116,8 +116,10 @@ class Subscription {
   }
 }
 
+// a new "well known" symbol
 Symbol.observable = Symbol.for("observable")
 
+// entry point
 class MyObservable {
   constructor(emitter) {
     if(!isFn(emitter))
@@ -125,6 +127,8 @@ class MyObservable {
     this[pEmitterCb] = emitter
   }
 
+  // Conflating interfaces is generally a bad practice
+  // but, what can I do, I didn't write the spec
   subscribe(observer) {
     let startCb, nextCb, errorCb, completeCb
     if(isFn(observer)) {
@@ -144,6 +148,11 @@ class MyObservable {
     return new Subscription(this[pEmitterCb], startCb, nextCb, errorCb, completeCb)
   }
 
+  // you know, if they called it 'then' instead of 'next', and then they added
+  // a "done" callback to promises, and fixed iterators to work async (I read that
+  // they were going to, but it's not working for me at present) then they could
+  // merge observables, iterators, and promises. (Promise would just need to call
+  // .done after its resolve function did its thing)
   [Symbol.observable]() {
     return this
   }
@@ -157,6 +166,7 @@ class MyObservable {
   }
 
   static from(toConvert) {
+    // the amount of pain caused by JS's late binding of `this` is pretty shocking
     const Observable = constructorFor(this)
 
     if(Symbol.observable in toConvert) {
@@ -174,6 +184,7 @@ class MyObservable {
 
 }
 
+// run the test suite against it
 require("es-observable-tests")
   .runTests(MyObservable)
   .then(({logger: { passed, failed, errored }}) => {
