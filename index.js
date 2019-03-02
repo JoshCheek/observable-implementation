@@ -113,6 +113,10 @@ function constructorFor(maybeConstructor) {
     ? maybeConstructor
     : MyObservable
 }
+function forEach(collection, callback) {
+  for(let element of collection)
+    callback(element)
+}
 
 class MyObservable {
   constructor(emitter) {
@@ -147,8 +151,7 @@ class MyObservable {
   static of(...items) {
     const Observable = constructorFor(this)
     return new Observable(({ next, complete }) => {
-      for(let item of items)
-        next(item)
+      forEach(items, next)
       complete()
     })
   }
@@ -164,8 +167,7 @@ class MyObservable {
     }
 
     return new Observable(({ next, complete }) => {
-      for(let element of toConvert)
-        next(element)
+      forEach(toConvert, next)
       complete()
     })
   }
